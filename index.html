@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Privacy enforcement: the browser blocks every outbound request and form submission from this page. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>header-lens · Email header analyzer</title>
+  <meta name="description" content="Visual email header analysis for SOC analysts. Runs entirely in your browser. Nothing is stored.">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="wordmark" href="./" aria-label="header-lens home">
+      <img src="assets/img/favicon.png" alt="" width="28" height="28">
+      <span>header<em>-lens</em></span>
+    </a>
+    <a class="brand" href="#" data-link="youtube" rel="noopener noreferrer" target="_blank">
+      <img src="assets/img/cis-logo.png" alt="Cyber Insight Signals logo" width="36" height="36">
+      <span class="brand-text">
+        <strong>Cyber Insight Signals</strong>
+        <small>Translating Cyber Chaos into Clarity</small>
+      </span>
+    </a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Email header analyzer</p>
+        <h1>header<span>-lens</span></h1>
+        <p class="lede">Paste raw email headers and get a visual phishing verdict in seconds: routing, authentication, spam scores and sender mismatches, all on one screen.</p>
+        <ul class="trust" aria-label="Privacy guarantees">
+          <li><span class="dot dot-teal" aria-hidden="true"></span>Runs entirely in your browser</li>
+          <li><span class="dot dot-blue" aria-hidden="true"></span>Nothing is stored, ever</li>
+          <li><span class="dot dot-orange" aria-hidden="true"></span>No sign-up, no API keys</li>
+        </ul>
+      </div>
+      <div class="hero-art">
+        <img src="assets/img/avatar.png" alt="A magnifying lens revealing the hidden route of an email" width="200" height="200">
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="input-title">
+      <div class="card-head">
+        <h2 id="input-title">Paste email headers</h2>
+        <div class="tools">
+          <label class="btn btn-ghost" for="file-input">Open .eml / .txt</label>
+          <input id="file-input" type="file" accept=".eml,.txt,.msg,text/plain,message/rfc822" hidden>
+          <button class="btn btn-ghost" id="sample-btn" type="button">Try a sample</button>
+          <button class="btn btn-ghost" id="clear-btn" type="button">Clear</button>
+        </div>
+      </div>
+
+      <div class="drop" id="drop-zone">
+        <textarea id="header-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-describedby="input-status"
+          placeholder="Received: from mail.example.com (mail.example.com [203.0.113.10])&#10;    by mx.yourco.com with ESMTPS id ...&#10;Authentication-Results: spf=pass ...&#10;From: &quot;Sender&quot; &lt;sender@example.com&gt;&#10;&#10;Paste the full header block, or drop an .eml file here"></textarea>
+      </div>
+
+      <div class="card-foot">
+        <p id="input-status" class="status" aria-live="polite">Waiting for headers</p>
+        <button class="btn btn-primary" id="analyze-btn" type="button">Analyze headers</button>
+      </div>
+    </section>
+
+    <section class="why" aria-label="Why header-lens">
+      <div class="why-item">
+        <h3>Verdict first</h3>
+        <p>A clear phishing or genuine call with the reasons behind it.</p>
+      </div>
+      <div class="why-item">
+        <h3>Eight visual panels</h3>
+        <p>Routing map, auth donut, spam gauges and mismatch checks.</p>
+      </div>
+      <div class="why-item">
+        <h3>Raw table on demand</h3>
+        <p>Every header in a searchable side pane, one click away.</p>
+      </div>
+    </section>
+
+    <details class="proof">
+      <summary>Why it's safe to paste real headers here</summary>
+      <ul>
+        <li><strong>Processed on your device.</strong> Parsing and scoring run as JavaScript in this tab. There is no server behind this page.</li>
+        <li><strong>The browser blocks outbound traffic.</strong> A Content Security Policy forbids this page from sending requests or submitting forms, so data cannot leave even by mistake.</li>
+        <li><strong>Nothing persists.</strong> No cookies, local storage or caching. Leaving or reloading the page wipes everything.</li>
+        <li><strong>No third parties.</strong> Fonts, scripts and images are served from this repository. No analytics, no trackers, no CDNs.</li>
+        <li><strong>Verify it yourself.</strong> Open DevTools: the Network tab stays empty after you paste, and Application storage is blank. The full source is <a href="https://github.com/amethyst8174/header-lens" rel="noopener noreferrer" target="_blank">on GitHub</a>.</li>
+      </ul>
+    </details>
+  </main>
+
+  <footer class="footer">
+    <a class="brand brand-sm" href="#" data-link="youtube" rel="noopener noreferrer" target="_blank">
+      <img src="assets/img/cis-logo.png" alt="" width="28" height="28">
+      <span>Cyber Insight Signals</span>
+    </a>
+    <nav class="links" aria-label="Cyber Insight Signals links">
+      <a href="#" data-link="youtube" rel="noopener noreferrer" target="_blank">YouTube</a>
+      <a href="#" data-link="blog" rel="noopener noreferrer" target="_blank">Security blog</a>
+      <a href="https://github.com/amethyst8174/header-lens" rel="noopener noreferrer" target="_blank">GitHub</a>
+    </nav>
+    <p class="copy">© <span id="year">2026</span> @CyberInsightSignal. All rights reserved.</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

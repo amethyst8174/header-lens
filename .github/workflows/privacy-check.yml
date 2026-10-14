@@ -1,0 +1,23 @@
+name: Privacy check
+
+# Fails the build if any code could store data or send it off the page.
+on: [push, pull_request]
+
+jobs:
+  no-storage-no-network:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block storage, network and third-party code
+        run: |
+          set -e
+          fail=0
+          if grep -rnE "localStorage|sessionStorage|indexedDB|document\.cookie|serviceWorker|caches\.open" --include=*.js --include=*.html .; then
+            echo "::error::Browser storage API found"; fail=1; fi
+          if grep -rnE "fetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource" --include=*.js .; then
+            echo "::error::Network call found (live lookups must go through the approved lookup module)"; fail=1; fi
+          if grep -rnE "<(script|link|img)[^>]+(src|href)=\"https?://" --include=*.html .; then
+            echo "::error::Third-party script, style or image found"; fail=1; fi
+          if ! grep -q "connect-src 'none'" index.html; then
+            echo "::error::Content Security Policy missing or relaxed"; fail=1; fi
+          exit $fail
