@@ -406,8 +406,10 @@ body.is-dash .topbar, body.is-dash .footer { max-width: 1440px; }
 .share-btn:hover { text-decoration: none; color: var(--text); border-color: var(--line-strong); transform: translateY(-1px); }
 .share-li span { font-size: 13px; letter-spacing: -0.02em; }
 .share-fb span { font: 700 16px/1 Georgia, serif; }
-.share-li:hover { color: #6db3ff; } .share-x:hover { color: #fff; } .share-fb:hover { color: #7aa7ff; }
-body.is-dash .share { display: none; }
+.share-btn { color: #fff; border: 0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35); }
+.share-li { background: #0a66c2; } .share-x { background: #000; box-shadow: 0 0 0 1px #3a4a5e, 0 4px 12px rgba(0, 0, 0, 0.35); } .share-fb { background: #1877f2; }
+.share-btn:hover { color: #fff; filter: brightness(1.15); transform: translateY(-2px); }
+.share-l { color: var(--body); }
 @media (max-width: 560px) { .share-l { display: none; } .topbar-r { gap: 8px; } .share-btn { width: 30px; height: 30px; } }
 
 /* 1. Routing: vertical timeline */
