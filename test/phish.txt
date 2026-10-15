@@ -1,0 +1,44 @@
+Received: from AM9PR04MB8412.eurprd04.prod.outlook.com (2603:10a6:20b:3e1::14) by
+ DB9PR04MB9618.eurprd04.prod.outlook.com with HTTPS; Wed, 14 Oct 2026 10:18:24 +0000
+Received: from DB8EUR05FT021.eop-eur05.prod.protection.outlook.com (2603:10a6:20b:3e1::4)
+ by AM9PR04MB8412.eurprd04.prod.outlook.com (2603:10a6:20b:3e1::14) with Microsoft SMTP
+ Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7;
+ Wed, 14 Oct 2026 10:18:21 +0000
+Received: from mx.bulk-relay.example (76.74.52.17) by
+ DB8EUR05FT021.mail.protection.outlook.com (40.107.22.81) with Microsoft SMTP
+ Server id 15.20.7 via Frontend Transport; Wed, 14 Oct 2026 10:18:20 +0000
+Received: from vps-31.host.example (unknown [159.89.10.20]) by mx.bulk-relay.example
+ (Postfix) with SMTP id 4F2A1C; Wed, 14 Oct 2026 10:05:06 +0000
+Authentication-Results: spf=fail (sender IP is 76.74.52.17)
+ smtp.mailfrom=mailer-x.example; dkim=pass (signature was verified)
+ header.d=mailer-x.example;dmarc=fail action=quarantine
+ header.from=yourc0.com;compauth=fail reason=000
+Received-SPF: Fail (protection.outlook.com: domain of mailer-x.example does not
+ designate 76.74.52.17 as permitted sender) receiver=protection.outlook.com;
+ client-ip=76.74.52.17; helo=mx.bulk-relay.example;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailer-x.example; s=s1;
+ h=from:reply-to:subject:date; bh=placeholder; b=placeholder
+Return-Path: bounce@mailer-x.example
+From: "HR Department" <hr@yourc0.com>
+Reply-To: payroll.desk@gmail.com
+To: ravi@yourco.com
+Delivered-To: ravi@yourco.com
+Subject: =?UTF-8?B?U2FsYXJ5IHJldmlzaW9uIFE0IOKAkyBhY3Rpb24gcmVxdWlyZWQ=?=
+Date: Wed, 14 Oct 2026 10:05:02 +0000
+Message-ID: <20261014100502.4F2A1C@vps-31.host.example>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="b1"
+Content-Transfer-Encoding: 7bit
+X-Mailer: PHPMailer 5.2.4 (https://github.com/PHPMailer/PHPMailer)
+X-Originating-IP: [159.89.10.20]
+X-MS-Exchange-Organization-SCL: 6
+X-MS-Exchange-Organization-PCL: 8
+X-MS-Exchange-Organization-AVStamp-Service: 1.0
+X-Forefront-Antispam-Report: CIP:76.74.52.17;CTRY:US;LANG:en;SCL:6;SRV:;
+ IPV:NLI;SFV:SPM;H:mx.bulk-relay.example;PTR:InfoNoRecords;CAT:PHSH;SFTY:9.25;SFS:;DIR:INB;
+X-Microsoft-Antispam: BCL:1;
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-AuthSource: DB8EUR05FT021.eop-eur05.prod.protection.outlook.com
+X-MS-Exchange-CrossTenant-FromEntityHeader: Internet
+X-MS-Exchange-Organization-Network-Message-Id: 6b1f2c3d-0000-4000-8000-123456789abc
+X-MS-Exchange-CrossTenant-Id: 72f988bf-86f1-41af-91ab-2d7cd011db47

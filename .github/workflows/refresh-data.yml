@@ -1,0 +1,55 @@
+name: Refresh offline data
+
+# Rebuilds the lookup data the dashboard uses in the browser.
+# Threat lists refresh weekly; the larger IP-to-country/ASN data refreshes in the first week of each month
+# to keep repository growth small. Runs on GitHub's servers and never sees any analyst data.
+on:
+  schedule:
+    - cron: "23 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Also rebuild IP country/ASN data"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency: refresh-data
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install build tools
+        run: npm ci --prefix tools --no-audit --no-fund
+      - name: Download sources
+        run: |
+          set -e
+          SRC="$RUNNER_TEMP/src"; mkdir -p "$SRC"
+          base=https://github.com/sapics/ip-location-db/releases/download/latest
+          for f in server-country-ipv4-num.csv server-country-ipv6-num.csv iptoasn-asn-ipv4-num.csv iptoasn-asn-ipv6-num.csv; do
+            curl -fsSL --retry 3 -o "$SRC/$f" "$base/$f"
+          done
+          curl -fsSL --retry 3 -o "$SRC/firehol_level1.netset" https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level1.netset
+          curl -fsSL --retry 3 -o "$SRC/tor-exits.txt" https://check.torproject.org/torbulkexitlist || echo "Tor list unavailable, skipping"
+          wc -l "$SRC"/*
+      - name: Build data
+        run: node tools/build-data.mjs "$RUNNER_TEMP/src"
+      - name: Keep monthly files unless due
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.full) }}
+        run: |
+          if [ "$(date -u +%d)" -gt 7 ]; then git checkout -- data/geo.js data/world.js; fi
+      - name: Commit changes
+        run: |
+          if git diff --quiet -- data; then echo "No changes"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          git commit -m "Refresh offline lookup data"
+          git push

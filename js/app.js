@@ -26,25 +26,24 @@
   });
   document.getElementById("year").textContent = String(new Date().getFullYear());
 
-  // Keep only the header block of a full message (headers end at the first blank line).
-  function headerBlock(text) {
-    var t = text.replace(/\r\n?/g, "\n").replace(/^﻿/, "").replace(/^\s+/, "");
-    var end = t.search(/\n[ \t]*\n/);
-    return end === -1 ? t : t.slice(0, end);
-  }
+  var headerBlock = window.HL.headerBlock, parseHeaders = window.HL.parse;
+  var viewInput = document.getElementById("view-input"), viewDash = document.getElementById("view-dash");
+  var analyzeBtn = document.getElementById("analyze-btn");
 
-  // Unfold continuation lines and split into name/value pairs.
-  function parseHeaders(text) {
-    var out = [];
-    headerBlock(text).split("\n").forEach(function (line) {
-      if (/^[ \t]/.test(line) && out.length) {
-        out[out.length - 1].value += " " + line.trim();
-        return;
-      }
-      var m = line.match(/^([!-9;-~]+):[ \t]?(.*)$/);
-      if (m) out.push({ name: m[1], value: m[2] });
+  // Offline data (IP country/ASN, threat lists, world map) is loaded from this site on first use.
+  var dataPromise = null;
+  function loadScript(src) {
+    return new Promise(function (resolve) {
+      var el = document.createElement("script");
+      el.src = src; el.async = true;
+      el.onload = function () { resolve(true); };
+      el.onerror = function () { resolve(false); };
+      document.head.appendChild(el);
     });
-    return out;
+  }
+  function loadData() {
+    if (!dataPromise) dataPromise = Promise.all(["data/world.js", "data/threat.js", "data/geo.js"].map(loadScript)).then(function () { return window.HLGeo.load(); });
+    return dataPromise;
   }
 
   function setStatus(msg, kind) {
@@ -69,7 +68,7 @@
   }
 
   var timer;
-  input.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(describe, 150); });
+  input.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(describe, 150); loadData(); });
 
   function loadFile(file) {
     if (!file) return;
@@ -92,9 +91,15 @@
     if (e.dataTransfer && e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
   });
 
+  function showInput() {
+    window.HLDash.clear(viewDash);
+    viewDash.classList.add("hidden");
+    viewInput.classList.remove("hidden");
+    document.body.classList.remove("is-dash");
+  }
   function clearAll() {
     input.value = "";
-    window.HL_SESSION = null;
+    showInput();
     setStatus("Waiting for headers");
   }
   document.getElementById("clear-btn").addEventListener("click", function () { clearAll(); input.focus(); });
@@ -104,12 +109,27 @@
     describe();
   });
 
-  document.getElementById("analyze-btn").addEventListener("click", function () {
+  analyzeBtn.addEventListener("click", function () {
     var headers = describe();
     if (!headers) { input.focus(); return; }
-    // Held in memory only, for the dashboard view (next build).
-    window.HL_SESSION = { headers: headers };
-    setStatus(headers.length + " headers parsed in your browser · dashboard view arrives in the next build", "ok");
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = "Analyzing…";
+    setStatus("Loading offline IP data (first run only)…");
+    loadData().then(function (db) {
+      var result = window.HL.analyze(input.value, { lookup: db ? window.HLGeo.lookup : null });
+      window.HLDash.render(viewDash, result, { back: function () { showInput(); input.focus(); } });
+      viewInput.classList.add("hidden");
+      viewDash.classList.remove("hidden");
+      document.body.classList.add("is-dash");
+      window.scrollTo(0, 0);
+      viewDash.focus({ preventScroll: true });
+      describe();
+    }).catch(function () {
+      setStatus("Something went wrong while analyzing. Check the headers and try again.", "err");
+    }).then(function () {
+      analyzeBtn.disabled = false;
+      analyzeBtn.textContent = "Analyze headers";
+    });
   });
 
   // Wipe everything when the page is hidden, closed, or restored from the back/forward cache.
@@ -117,46 +137,51 @@
   window.addEventListener("pageshow", function (e) { if (e.persisted) clearAll(); });
   clearAll();
 
-  // Sample uses documentation-only IP ranges and example domains.
+  // Fictional sample: example domains, a relay on a public threat list, and a hosting-network origin.
   var SAMPLE = [
-    "Received: from DB8EUR05HT123.eop-eur05.prod.protection.outlook.com (10.0.4.12) by",
-    " AM0PR04MB1234.eurprd04.prod.outlook.com with HTTPS; Wed, 14 Oct 2026 10:18:24 +0000",
-    "Received: from mx.bulk-relay.example (203.0.113.45) by",
-    " DB8EUR05FT021.mail.protection.outlook.com (40.107.22.81) with Microsoft SMTP",
+    "Received: from AM9PR04MB8412.eurprd04.prod.outlook.com (2603:10a6:20b:3e1::14) by",
+    " DB9PR04MB9618.eurprd04.prod.outlook.com with HTTPS; Wed, 14 Oct 2026 10:18:24 +0000",
+    "Received: from DB8EUR05FT021.eop-eur05.prod.protection.outlook.com (2603:10a6:20b:3e1::4)",
+    " by AM9PR04MB8412.eurprd04.prod.outlook.com (2603:10a6:20b:3e1::14) with Microsoft SMTP",
     " Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7;",
-    " Wed, 14 Oct 2026 10:18:20 +0000",
-    "Received: from vps-31.host.example ([198.51.100.23]) by mx.bulk-relay.example",
+    " Wed, 14 Oct 2026 10:18:21 +0000",
+    "Received: from mx.bulk-relay.example (76.74.52.17) by",
+    " DB8EUR05FT021.mail.protection.outlook.com (40.107.22.81) with Microsoft SMTP",
+    " Server id 15.20.7 via Frontend Transport; Wed, 14 Oct 2026 10:18:20 +0000",
+    "Received: from vps-31.host.example (unknown [159.89.10.20]) by mx.bulk-relay.example",
     " (Postfix) with SMTP id 4F2A1C; Wed, 14 Oct 2026 10:05:06 +0000",
-    "Authentication-Results: spf=fail (sender IP is 203.0.113.45)",
+    "Authentication-Results: spf=fail (sender IP is 76.74.52.17)",
     " smtp.mailfrom=mailer-x.example; dkim=pass (signature was verified)",
     " header.d=mailer-x.example;dmarc=fail action=quarantine",
-    " header.from=yourc0.example;compauth=fail reason=000",
+    " header.from=yourc0.com;compauth=fail reason=000",
     "Received-SPF: Fail (protection.outlook.com: domain of mailer-x.example does not",
-    " designate 203.0.113.45 as permitted sender) receiver=protection.outlook.com;",
-    " client-ip=203.0.113.45; helo=mx.bulk-relay.example;",
+    " designate 76.74.52.17 as permitted sender) receiver=protection.outlook.com;",
+    " client-ip=76.74.52.17; helo=mx.bulk-relay.example;",
     "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailer-x.example; s=s1;",
     " h=from:reply-to:subject:date; bh=placeholder; b=placeholder",
     "Return-Path: bounce@mailer-x.example",
-    "From: \"HR Department\" <hr@yourc0.example>",
-    "Reply-To: payroll@freemail.example",
-    "To: ravi@yourco.example",
-    "Delivered-To: ravi@yourco.example",
-    "Subject: Salary revision Q4 - action required",
+    "From: \"HR Department\" <hr@yourc0.com>",
+    "Reply-To: payroll.desk@gmail.com",
+    "To: ravi@yourco.com",
+    "Delivered-To: ravi@yourco.com",
+    "Subject: =?UTF-8?B?U2FsYXJ5IHJldmlzaW9uIFE0IOKAkyBhY3Rpb24gcmVxdWlyZWQ=?=",
     "Date: Wed, 14 Oct 2026 10:05:02 +0000",
     "Message-ID: <20261014100502.4F2A1C@vps-31.host.example>",
     "MIME-Version: 1.0",
     "Content-Type: multipart/mixed; boundary=\"b1\"",
     "Content-Transfer-Encoding: 7bit",
-    "X-Mailer: PHPMailer 5.2.4",
-    "X-Originating-IP: [198.51.100.23]",
+    "X-Mailer: PHPMailer 5.2.4 (https://github.com/PHPMailer/PHPMailer)",
+    "X-Originating-IP: [159.89.10.20]",
     "X-MS-Exchange-Organization-SCL: 6",
     "X-MS-Exchange-Organization-PCL: 8",
     "X-MS-Exchange-Organization-AVStamp-Service: 1.0",
-    "X-Forefront-Antispam-Report: CIP:203.0.113.45;CTRY:RU;LANG:en;SCL:6;SRV:;",
-    " IPV:NLI;SFV:SPM;H:mx.bulk-relay.example;PTR:InfoNoRecords;CAT:PHSH;SFS:;DIR:INB;",
+    "X-Forefront-Antispam-Report: CIP:76.74.52.17;CTRY:US;LANG:en;SCL:6;SRV:;",
+    " IPV:NLI;SFV:SPM;H:mx.bulk-relay.example;PTR:InfoNoRecords;CAT:PHSH;SFTY:9.25;SFS:;DIR:INB;",
     "X-Microsoft-Antispam: BCL:1;",
     "X-MS-Exchange-CrossTenant-AuthAs: Anonymous",
     "X-MS-Exchange-CrossTenant-AuthSource: DB8EUR05FT021.eop-eur05.prod.protection.outlook.com",
-    "X-MS-Exchange-Organization-Network-Message-Id: 6b1f2c3d-0000-4000-8000-123456789abc"
+    "X-MS-Exchange-CrossTenant-FromEntityHeader: Internet",
+    "X-MS-Exchange-Organization-Network-Message-Id: 6b1f2c3d-0000-4000-8000-123456789abc",
+    "X-MS-Exchange-CrossTenant-Id: 72f988bf-86f1-41af-91ab-2d7cd011db47"
   ].join("\n");
 })();
