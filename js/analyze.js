@@ -279,7 +279,7 @@
 
   // ---------- Main analysis ----------
   // Bump when scoring rules change, so a different score for the same header is always explainable.
-  var ENGINE_VERSION = "1.1.0";
+  var ENGINE_VERSION = "1.2.0";
 
   // Canonical form of the input: what the fingerprint is computed over. Line endings, a BOM,
   // leading blank lines and trailing spaces don't change the analysis, so they don't change the fingerprint.
@@ -502,11 +502,27 @@
     var verdict = score >= 55 ? "phish" : score >= 25 ? "suspicious" : "genuine";
     var evidence = findings.filter(function (f) { return f.sev !== "good" && f.sev !== "info"; }).length + (ar ? 2 : 0) + (scl !== null ? 1 : 0);
     var confidence = evidence >= 6 || strong >= 3 || (verdict === "genuine" && dmarcRes === "pass" && scl !== null && scl <= 1) ? "high" : evidence >= 3 ? "medium" : "low";
+
+    // Completeness: which of the headers a reliable verdict depends on are missing.
+    var missing = [];
+    if (!hops.length) missing.push({ name: "Received", why: "delivery path and sending IPs" });
+    else if (hops.length === 1) missing.push({ name: "Received (only 1 hop)", why: "most of the delivery path" });
+    if (!from) missing.push({ name: "From", why: "sender identity" });
+    if (!arList.length && !rspf && !H.get("ARC-Authentication-Results")) missing.push({ name: "Authentication-Results", why: "SPF, DKIM and DMARC verdicts" });
+    if (!dateH) missing.push({ name: "Date", why: "sent time" });
+    if (!msgId) missing.push({ name: "Message-ID", why: "message origin check" });
+    var core = missing.filter(function (m) { return /^(Received$|From|Authentication)/.test(m.name); }).length;
+    var completeness = { level: !missing.length ? "complete" : core >= 2 || missing.length >= 3 ? "minimal" : "partial", missing: missing, headerCount: list.length };
+    // Fewer headers means less evidence, so confidence is capped rather than overstated.
+    if (completeness.level === "minimal") confidence = "low";
+    else if (completeness.level === "partial" && confidence === "high") confidence = "medium";
+    // With most evidence missing, a low score proves nothing, so it isn't reported as genuine.
+    if (completeness.level === "minimal" && verdict === "genuine") verdict = "inconclusive";
     var sevRank = { high: 0, med: 1, low: 2, info: 3, good: 4 };
     findings.sort(function (a, b) { return sevRank[a.sev] - sevRank[b.sev] || b.points - a.points; });
 
     return {
-      engine: ENGINE_VERSION, canonical: canonical(text), dataVersion: ctx.dataVersion || null,
+      engine: ENGINE_VERSION, canonical: canonical(text), dataVersion: ctx.dataVersion || null, completeness: completeness,
       headers: list, findings: findings, score: score, verdict: verdict, confidence: confidence,
       routing: { hops: hops, returnPath: returnPath, deliveredTo: deliveredTo, xOrigIP: xoip, connecting: connecting, originHop: originHop, maxDelay: maxDelay },
       identity: { from: from, replyTo: replyTo, sender: sender, returnPath: returnPath, senderIP: firstIP(H.val("X-Sender-IP")), matrix: matrix, myDomain: myDomain },

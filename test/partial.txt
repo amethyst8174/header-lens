@@ -1,0 +1,4 @@
+From: "IT Support" <helpdesk@yourco.com>
+To: ravi@yourco.com
+Subject: Password expires today
+Date: Thu, 15 Oct 2026 09:12:44 +0530

@@ -17,7 +17,7 @@ if (!db) { console.error("FAIL offline data did not load"); process.exit(1); }
 const expected = JSON.parse(fs.readFileSync(path.join(root, "test/expected.json"), "utf8"));
 const run = (text) => {
   const r = HL.analyze(text, { lookup: HLGeo.lookup, dataVersion: HLGeo.info() });
-  return JSON.stringify({ v: r.verdict, s: r.score, c: r.confidence, f: r.findings.map((x) => [x.sev, x.points, x.title, x.detail]), h: r.routing.hops.map((x) => [x.ip, x.date, x.tls, x.delay]) });
+  return JSON.stringify({ v: r.verdict, s: r.score, c: r.confidence, k: r.completeness.level, f: r.findings.map((x) => [x.sev, x.points, x.title, x.detail]), h: r.routing.hops.map((x) => [x.ip, x.date, x.tls, x.delay]) });
 };
 let fail = 0;
 for (const file of Object.keys(expected)) {
@@ -37,6 +37,7 @@ for (const file of Object.keys(expected)) {
   const want = expected[file];
   if (r.v !== want.verdict) { console.error(`FAIL ${file}: verdict ${r.v}, expected ${want.verdict}`); fail = 1; }
   if (r.s < want.min || r.s > want.max) { console.error(`FAIL ${file}: score ${r.s} outside ${want.min}-${want.max}`); fail = 1; }
-  console.log(`${fail ? "…" : "ok"}  ${file}: ${r.v} ${r.s}/100 (${r.c})`);
+  if (want.completeness && r.k !== want.completeness) { console.error(`FAIL ${file}: completeness ${r.k}, expected ${want.completeness}`); fail = 1; }
+  console.log(`${fail ? "…" : "ok"}  ${file}: ${r.v} ${r.s}/100 (${r.c} confidence, header ${r.k})`);
 }
 process.exit(fail);

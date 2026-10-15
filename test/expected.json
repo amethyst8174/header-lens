@@ -1,5 +1,6 @@
 {
-  "phish.txt": { "verdict": "phish", "min": 80, "max": 100 },
-  "genuine.txt": { "verdict": "genuine", "min": 0, "max": 10 },
-  "long.txt": { "verdict": "phish", "min": 60, "max": 100 }
+  "phish.txt": { "verdict": "phish", "min": 80, "max": 100, "completeness": "complete" },
+  "genuine.txt": { "verdict": "genuine", "min": 0, "max": 10, "completeness": "complete" },
+  "long.txt": { "verdict": "phish", "min": 60, "max": 100, "completeness": "partial" },
+  "partial.txt": { "verdict": "inconclusive", "min": 0, "max": 24, "completeness": "minimal" }
 }

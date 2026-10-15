@@ -119,7 +119,7 @@
 
   // ---------- Verdict ----------
   function verdict(r) {
-    var V = { phish: { t: "Likely phishing", cls: "v-phish", ic: "alert" }, suspicious: { t: "Suspicious", cls: "v-susp", ic: "alert" }, genuine: { t: "Likely genuine", cls: "v-good", ic: "check" } }[r.verdict];
+    var V = { phish: { t: "Likely phishing", cls: "v-phish", ic: "alert" }, suspicious: { t: "Suspicious", cls: "v-susp", ic: "alert" }, genuine: { t: "Likely genuine", cls: "v-good", ic: "check" }, inconclusive: { t: "Inconclusive", cls: "v-inc", ic: "info" } }[r.verdict];
     var R = 34, C = 2 * Math.PI * R;
     var ring = s("svg", { viewBox: "0 0 84 84", class: "ring", role: "img", "aria-label": "Risk score " + r.score + " out of 100" }, [
       s("circle", { cx: 42, cy: 42, r: R, class: "ring-bg", fill: "none", "stroke-width": 8 }),
@@ -139,9 +139,28 @@
         h("p", { class: "v-meta", title: who + (subj ? " · " + subj : "") }, [h("span", { text: who }), subj ? h("span", { class: "v-subj", text: subj }) : null]),
         h("div", { class: "chips" }, reasons.length ? reasons.map(function (f) { return pill(f.sev === "high" ? "bad" : f.sev === "med" ? "warn" : "low", f.title); }).concat(goods.map(function (f) { return pill("good", f.title, "check"); }))
           : goods.map(function (f) { return pill("good", f.title, "check"); }).concat([pill("good", "No risk signals found", "check")])),
+        incompleteNote(r),
         fingerprintLine(r)
       ])
     ]);
+  }
+
+  // Clear warning when the pasted header is missing information the verdict depends on.
+  function incompleteNote(r) {
+    var c = r.completeness;
+    if (!c || c.level === "complete") return null;
+    var minimal = c.level === "minimal";
+    return h("div", { class: "v-incomplete " + (minimal ? "inc-min" : "inc-part"), role: "note" }, [
+      icon("alert"),
+      h("div", null, [
+        h("strong", { text: minimal ? "Incomplete header: this result may be inaccurate" : "Partial header: some results may be inaccurate" }),
+        h("span", { text: "Missing " + c.missing.map(function (m) { return m.name + " (" + m.why + ")"; }).join(", ") + ". Paste the full header from the original message for a reliable verdict: in Outlook, File › Properties › Internet headers; in Gmail, ⋮ › Show original." })
+      ])
+    ]);
+  }
+  function completenessText(r) {
+    var c = r.completeness;
+    return !c || c.level === "complete" ? "complete" : c.level + ", may be inaccurate (missing " + c.missing.map(function (m) { return m.name; }).join(", ") + ")";
   }
 
   // Same canonical header + same engine + same data = same fingerprint = same score, in any browser.
@@ -488,7 +507,7 @@
 
   // ---------- Exports (generated in memory, saved only on click) ----------
   function summary(r) {
-    var lines = ["header-lens report", "Verdict: " + r.verdict + " (" + r.score + "/100, " + r.confidence + " confidence)", "Fingerprint: " + (r.fingerprint || "") + " (" + versionText(r) + ")"];
+    var lines = ["header-lens report", "Verdict: " + r.verdict + " (" + r.score + "/100, " + r.confidence + " confidence)", "Header completeness: " + completenessText(r), "Fingerprint: " + (r.fingerprint || "") + " (" + versionText(r) + ")"];
     if (r.identity.from) lines.push("From: " + r.identity.from.raw);
     if (r.metadata.subject) lines.push("Subject: " + r.metadata.subject);
     lines.push("Auth: " + r.auth.checks.map(function (c) { return c.key + "=" + c.result; }).join(", "));
@@ -500,7 +519,7 @@
   }
   function csv(r) {
     var q = function (v) { v = String(v === null || v === undefined ? "" : v); return /^[=+\-@\t\r]/.test(v) ? "\"'" + v.replace(/"/g, "\"\"") + "\"" : "\"" + v.replace(/"/g, "\"\"") + "\""; };
-    var rows = [["type", "section", "severity", "name", "value"], ["meta", "", "", "verdict", r.verdict + " " + r.score + "/100"], ["meta", "", "", "fingerprint", (r.fingerprint || "") + " (" + versionText(r) + ")"]];
+    var rows = [["type", "section", "severity", "name", "value"], ["meta", "", "", "verdict", r.verdict + " " + r.score + "/100"], ["meta", "", "", "header completeness", completenessText(r)], ["meta", "", "", "fingerprint", (r.fingerprint || "") + " (" + versionText(r) + ")"]];
     r.findings.forEach(function (f) { rows.push(["finding", f.section, f.sev, f.title, f.detail]); });
     r.headers.forEach(function (x) { rows.push(["header", sectOf(x.name), "", x.name, x.value]); });
     return rows.map(function (row) { return row.map(q).join(","); }).join("\r\n");

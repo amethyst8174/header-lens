@@ -482,3 +482,14 @@ body.is-dash .topbar, body.is-dash .footer { max-width: 1440px; }
 @media (max-width: 860px) { .hop { flex: none; } }
 .v-fp { margin: 10px 0 0; font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; }
 .v-fp .mono { font-size: 11.5px; color: var(--body); }
+
+/* Incomplete-header warning inside the verdict */
+.v-incomplete { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid; font-size: 12.5px; line-height: 1.5; }
+.v-incomplete .ic { width: 18px; height: 18px; margin-top: 1px; }
+.v-incomplete strong { display: block; font-size: 13.5px; }
+.v-incomplete span { color: var(--body); }
+.inc-min { border-color: rgba(255, 181, 71, 0.6); background: rgba(255, 181, 71, 0.12); color: var(--warn); }
+.inc-part { border-color: rgba(227, 207, 110, 0.4); background: rgba(227, 207, 110, 0.07); color: var(--low); }
+.inc-min strong, .inc-part strong { color: inherit; }
+.v-inc { border-color: rgba(142, 163, 187, 0.5); background: linear-gradient(100deg, rgba(142, 163, 187, 0.14), var(--panel) 60%); }
+.v-inc .ring-fg { stroke: var(--neutral); } .v-inc .v-kicker { color: var(--neutral); }
