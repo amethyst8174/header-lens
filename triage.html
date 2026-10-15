@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Privacy enforcement: the browser blocks every outbound request and form submission from this page. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Email triage · header-lens</title>
+  <meta name="description" content="Phishing email triage for SOC analysts: headers, links, QR codes and attachments in one verdict. Runs entirely in your browser.">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/triage.css">
+</head>
+<body class="triage">
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="wordmark" href="./" aria-label="header-lens home">
+      <img src="assets/img/favicon.png" alt="" width="28" height="28">
+      <span>header<em>-lens</em></span>
+    </a>
+    <nav class="toolnav" aria-label="Tools">
+      <a href="./">Header analysis</a>
+      <a href="triage.html" aria-current="page">Email triage</a>
+    </nav>
+    <div class="topbar-r">
+      <nav class="share" aria-label="Share header-lens">
+        <span class="share-l">Share</span>
+        <a class="share-btn share-li" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Famethyst8174.github.io%2Fheader-lens%2Ftriage.html" target="_blank" rel="noopener noreferrer" title="Share on LinkedIn" aria-label="Share on LinkedIn"><span aria-hidden="true">in</span></a>
+        <a class="share-btn share-x" href="https://x.com/intent/post?url=https%3A%2F%2Famethyst8174.github.io%2Fheader-lens%2Ftriage.html&amp;text=Phishing%20email%20triage%20that%20runs%20entirely%20in%20your%20browser" target="_blank" rel="noopener noreferrer" title="Share on X (Twitter)" aria-label="Share on X (Twitter)"><span aria-hidden="true">X</span></a>
+        <a class="share-btn share-fb" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Famethyst8174.github.io%2Fheader-lens%2Ftriage.html" target="_blank" rel="noopener noreferrer" title="Share on Facebook" aria-label="Share on Facebook"><span aria-hidden="true">f</span></a>
+      </nav>
+      <a class="brand" href="#" data-link="youtube" rel="noopener noreferrer" target="_blank">
+        <img src="assets/img/cis-logo.png" alt="Cyber Insight Signals logo" width="36" height="36">
+        <span class="brand-text">
+          <strong>Cyber Insight Signals</strong>
+          <small>Translating Cyber Chaos into Clarity</small>
+        </span>
+      </a>
+    </div>
+  </header>
+
+  <main id="view-input">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Phishing email triage</p>
+        <h1>Email <span>triage</span></h1>
+        <p class="lede">Drop in a suspicious email and get one verdict built from its headers, links, QR codes and attachments, with IOCs and hunt queries ready to copy.</p>
+        <ul class="trust" aria-label="Privacy guarantees">
+          <li><span class="dot dot-teal" aria-hidden="true"></span>Files never leave your browser</li>
+          <li><span class="dot dot-blue" aria-hidden="true"></span>Attachments are read, never opened</li>
+          <li><span class="dot dot-orange" aria-hidden="true"></span>Nothing is stored</li>
+        </ul>
+      </div>
+      <div class="hero-art">
+        <img src="assets/img/avatar.png" alt="A magnifying lens revealing the hidden route of an email" width="200" height="200">
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="input-title">
+      <div class="card-head">
+        <h2 id="input-title">Add the suspicious email</h2>
+        <div class="tools">
+          <label class="btn btn-ghost" for="file-input">Open .eml / .msg</label>
+          <input id="file-input" type="file" accept=".eml,.msg,.txt,message/rfc822,application/vnd.ms-outlook" hidden>
+          <button class="btn btn-ghost" id="sample-btn" type="button">Try a sample</button>
+          <button class="btn btn-ghost" id="clear-btn" type="button">Clear</button>
+        </div>
+      </div>
+      <div class="drop tdrop" id="drop-zone">
+        <div class="tdrop-file hidden" id="file-chip">
+          <span class="tdrop-ic" aria-hidden="true"></span>
+          <div><strong id="file-name"></strong><span id="file-meta"></span></div>
+          <button class="btn btn-ghost btn-sm" id="file-remove" type="button">Remove</button>
+        </div>
+        <textarea id="raw-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-describedby="input-status"
+          placeholder="Drop an .eml or .msg file here, or paste the full message source&#10;&#10;Outlook: open the email › File › Save As › Outlook Message (.msg)&#10;Gmail: ⋮ › Download message (.eml)&#10;Raw source: ⋮ › Show original › Copy to clipboard"></textarea>
+      </div>
+      <div class="card-foot">
+        <p id="input-status" class="status" aria-live="polite">Waiting for an email</p>
+        <button class="btn btn-primary" id="analyze-btn" type="button">Analyze email</button>
+      </div>
+    </section>
+
+    <section class="why" aria-label="What email triage checks">
+      <div class="why-item"><h3>Headers</h3><p>The full header-lens analysis: routing, authentication, sender identity and spam verdicts.</p></div>
+      <div class="why-item"><h3>Links and QR codes</h3><p>Unwraps Safe Links and Proofpoint, decodes QR codes, flags lookalikes and hidden tricks.</p></div>
+      <div class="why-item"><h3>Attachments</h3><p>Real file type, hashes, macros, HTML smuggling and risky PDFs, without opening anything.</p></div>
+    </section>
+
+    <details class="proof">
+      <summary>Why it's safe to drop real emails here</summary>
+      <ul>
+        <li><strong>Processed on your device.</strong> The email is parsed in this tab. There is no server behind this page.</li>
+        <li><strong>The browser blocks outbound traffic.</strong> A Content Security Policy forbids this page from sending requests, so neither the email nor its attachments can leave.</li>
+        <li><strong>Nothing is opened or rendered.</strong> HTML is read as text, links are never followed, images and remote content never load, and attachments are only inspected as bytes.</li>
+        <li><strong>Nothing persists.</strong> No cookies or browser storage. Leaving or reloading the page wipes everything.</li>
+      </ul>
+    </details>
+  </main>
+
+  <main id="view-dash" class="dash hidden" tabindex="-1" aria-label="Email triage results"></main>
+
+  <footer class="footer">
+    <a class="brand brand-sm" href="#" data-link="youtube" rel="noopener noreferrer" target="_blank">
+      <img src="assets/img/cis-logo.png" alt="" width="28" height="28">
+      <span>Cyber Insight Signals</span>
+    </a>
+    <nav class="links" aria-label="Cyber Insight Signals links">
+      <a href="#" data-link="youtube" rel="noopener noreferrer" target="_blank">YouTube</a>
+      <a href="#" data-link="blog" rel="noopener noreferrer" target="_blank">Security blog</a>
+    </nav>
+    <p class="copy">© <span id="year">2026</span> @CyberInsightSignal. All rights reserved.</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/analyze.js"></script>
+  <script src="js/geodb.js"></script>
+  <script src="assets/vendor/html2canvas.min.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="assets/vendor/jsQR.js"></script>
+  <script src="assets/vendor/spark-md5.min.js"></script>
+  <script src="js/triage-msg.js"></script>
+  <script src="js/triage-mime.js"></script>
+  <script src="js/triage-analyze.js"></script>
+  <script src="js/triage-sample.js"></script>
+  <script src="js/triage-ui.js"></script>
+</body>
+</html>

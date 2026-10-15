@@ -23,6 +23,8 @@ jobs:
             echo "::error::Network call found (live lookups must go through the approved lookup module)"; fail=1; fi
           if grep -rnE "<(script|link|img)[^>]+(src|href)=\"https?://" --include=*.html .; then
             echo "::error::Third-party script, style or image found"; fail=1; fi
-          if ! grep -q "connect-src 'none'" index.html; then
-            echo "::error::Content Security Policy missing or relaxed"; fail=1; fi
+          for page in index.html triage.html; do
+            if ! grep -q "connect-src 'none'" "$page"; then
+              echo "::error::Content Security Policy missing or relaxed in $page"; fail=1; fi
+          done
           exit $fail

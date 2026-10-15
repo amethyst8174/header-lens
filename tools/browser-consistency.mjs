@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { chromium, firefox, webkit } from "playwright";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".woff2": "font/woff2", ".json": "application/json" };
+const types = { ".eml": "message/rfc822", ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".woff2": "font/woff2", ".json": "application/json" };
 const server = http.createServer((req, res) => {
   const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname.replace(/\/$/, "/index.html")));
   if (!p.startsWith(root) || !fs.existsSync(p)) { res.writeHead(404); return res.end(); }
@@ -32,6 +32,23 @@ for (const name of wanted) {
     await page.waitForFunction(() => !/computing/.test(document.querySelector(".v-fp").textContent));
     const r = await page.evaluate(() => [document.querySelector(".ring-num").textContent, document.querySelector(".verdict h2").textContent, document.querySelector(".v-fp .mono").getAttribute("title")]);
     (results[f] ||= {})[name] = r.join(" | ");
+  }
+  await browser.close();
+}
+// Email triage: same email file in every browser must give the same score, verdict and fingerprint.
+for (const name of wanted) {
+  const browser = await engines[name].launch(process.env.CHROMIUM_PATH && name === "chromium" ? { executablePath: process.env.CHROMIUM_PATH } : {});
+  const page = await browser.newPage();
+  for (const f of ["triage-phish.eml", "triage-genuine.eml"]) {
+    for (let run = 0; run < 2; run++) {
+      await page.goto(url + "triage.html");
+      await page.setInputFiles("#file-input", path.join(root, "test", f));
+      await page.waitForFunction(() => /Ready/.test(document.getElementById("input-status").textContent));
+      await page.click("#analyze-btn");
+      await page.waitForSelector(".tdash .verdict", { timeout: 30000 });
+      const r = await page.evaluate(() => [document.querySelector(".tdash .ring-num").textContent, document.querySelector(".tdash .verdict h2").textContent, [...document.querySelectorAll(".area")].map((a) => a.textContent).join(" "), document.querySelector(".tdash .v-fp .mono").getAttribute("title")]);
+      (results["triage " + f] ||= {})[name + (run ? " again" : "")] = r.join(" | ");
+    }
   }
   await browser.close();
 }

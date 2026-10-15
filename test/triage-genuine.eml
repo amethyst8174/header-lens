@@ -1,0 +1,54 @@
+Received: from PH0PR11MB5000.namprd11.prod.outlook.com (2603:10b6:510:3c::5) by
+ SA1PR11MB6000.namprd11.prod.outlook.com with HTTPS; Mon, 12 Oct 2026 14:22:09 +0000
+Received: from BN9PR03CA0123.namprd03.prod.outlook.com (2603:10b6:408:fe::8) by
+ PH0PR11MB5000.namprd11.prod.outlook.com (2603:10b6:510:3c::5) with Microsoft SMTP
+ Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.8; Mon, 12 Oct 2026 14:22:08 +0000
+Received: from mail-sor-f41.google.com (209.85.220.41) by
+ BN1PEPF00004682.mail.protection.outlook.com (10.167.243.88) with Microsoft SMTP
+ Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.20.8 via Frontend
+ Transport; Mon, 12 Oct 2026 14:22:07 +0000
+Received: by mail-sor-f41.google.com with SMTP id d9443c01a7336-2a1b3c4d5e6so123456ad.1
+        for <priya@contoso.example>; Mon, 12 Oct 2026 07:22:06 -0700 (PDT)
+Authentication-Results: spf=pass (sender IP is 209.85.220.41)
+ smtp.mailfrom=gmail.com; dkim=pass (signature was verified)
+ header.d=gmail.com;dmarc=pass action=none header.from=gmail.com;compauth=pass
+ reason=100
+Received-SPF: Pass (protection.outlook.com: domain of gmail.com designates
+ 209.85.220.41 as permitted sender) receiver=protection.outlook.com;
+ client-ip=209.85.220.41; helo=mail-sor-f41.google.com; pr=C
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20230601; t=1791814926;
+ h=to:subject:message-id:date:from:mime-version:from:to:cc:subject:date:message-id:reply-to;
+ bh=placeholder; b=placeholder
+X-Received: by 2002:a17:902:e5c5:b0:2a1:3c4d:5e6f with SMTP id u5mr123456plf.12.1791814926000;
+        Mon, 12 Oct 2026 07:22:06 -0700 (PDT)
+From: Arjun Mehta <arjun.mehta.dev@gmail.com>
+Date: Mon, 12 Oct 2026 19:51:54 +0530
+Message-ID: <CAJx+8fQ1abcDEF=xyz@mail.gmail.com>
+Subject: Notes from Friday's design review
+To: Priya <priya@contoso.example>
+Return-Path: arjun.mehta.dev@gmail.com
+X-MS-Exchange-Organization-SCL: 1
+X-MS-Exchange-Organization-PCL: 2
+X-Forefront-Antispam-Report: CIP:209.85.220.41;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:mail-sor-f41.google.com;PTR:mail-sor-f41.google.com;CAT:NONE;SFS:(13230040);DIR:INB;
+X-Microsoft-Antispam: BCL:0;
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-AuthSource: BN1PEPF00004682.namprd03.prod.outlook.com
+X-MS-Exchange-Organization-Network-Message-Id: 0d3c1a2b-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+X-MS-Exchange-CrossTenant-Id: 1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="000000000000a1b2c3"
+
+--000000000000a1b2c3
+Content-Type: text/plain; charset="UTF-8"
+
+Hi Priya, here are the notes from Friday's design review. https://docs.github.com/en/repositories
+
+--000000000000a1b2c3
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<html><body><p>Hi Priya,</p><p>Here are the notes from Friday's design review. The updated spec is in the
+<a href=3D"https://docs.github.com/en/repositories">GitHub docs</a> we discussed, and the
+recording is on <a href=3D"https://www.youtube.com/watch?v=3Dabc123">YouTube</a>.</p><p>Thanks,<br>Arjun</p></body></html>
+--000000000000a1b2c3--
