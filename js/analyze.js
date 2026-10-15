@@ -169,7 +169,7 @@
     var date = semi > -1 ? parseDate(v.slice(semi + 1)) : null;
     var fromM = body.match(/^\s*from\s+([\s\S]*?)(?=\s+by\s|\s+with\s|\s+id\s|\s+for\s|$)/i);
     var byM = body.match(/\bby\s+([\s\S]*?)(?=\s+with\s|\s+id\s|\s+for\s|\s+via\s|$)/i);
-    var withM = body.match(/\bwith\s+([A-Za-z0-9_-]+)/i);
+    var withM = body.match(/\bwith\s+(Microsoft SMTP Server(?:\s*\(TLS\))?|[A-Za-z0-9_-]+(?:\s+(?:ESMTPS?A?|SMTP))?)/i);
     var fromClause = fromM ? fromM[1] : "", byClause = byM ? byM[1] : "";
     var fromHost = (fromClause.match(/^([^\s(\[]+)/) || [])[1] || "";
     var rdnsM = fromClause.match(/\(\s*([a-z0-9][a-z0-9.-]*\.[a-z]{2,})\.?\s*[\[(]/i);
@@ -178,18 +178,19 @@
     var cipher = (body.match(/cipher=([A-Z0-9_-]+)/i) || [])[1] || "";
     var P = proto.toUpperCase();
     var tls = "unknown";
-    if (/^(ESMTPS|ESMTPSA|LMTPS|UTF8SMTPS|UTF8SMTPSA|SMTPS|ESMTPTLS)$/.test(P) || tlsVer || /using TLS/i.test(body)) tls = "tls";
+    if (/^(ESMTPS|ESMTPSA|LMTPS|UTF8SMTPS|UTF8SMTPSA|SMTPS|ESMTPTLS)$/.test(P.split(" ").pop()) || tlsVer || /using TLS|SMTP Server \(TLS\)/i.test(body)) tls = "tls";
     else if (/^(HTTP|HTTPS|MAPI|LMTP|LOCAL)$/.test(P) || /Microsoft SMTP Server id/i.test(body) || /^(LOCAL|MAILBOX)/i.test(fromHost)) tls = "internal";
-    else if (/^(SMTP|ESMTP|ESMTPA|UTF8SMTP)$/.test(P) || /Microsoft SMTP Server$/i.test(proto)) tls = "plain";
+    else if (/^(SMTP|ESMTP|ESMTPA|UTF8SMTP)$/.test(P.split(" ").pop()) || /Microsoft SMTP Server$/i.test(proto)) tls = "plain";
     var ip = firstIP(fromClause);
     var ipk = ipKind(ip);
-    if (/Microsoft SMTP Server/i.test(body) && !tlsVer) tls = ipk && ipk.public && !/^2603:10|^2a01:111:/i.test(ip) ? "plain" : "internal";
+    if (/Microsoft SMTP Server/i.test(body) && !tlsVer && tls !== "tls") tls = ipk && ipk.public && !/^2603:10|^2a01:111:/i.test(ip) ? "plain" : "internal";
     if (!fromClause && !ip) tls = "internal";
+    if (tls === "plain" && ipk && !ipk.public) tls = "internal";
     return {
       raw: v, headerIndex: h.i, fromHost: fromHost, rdns: rdnsM ? rdnsM[1].toLowerCase() : "", ip: ip,
       byHost: (byClause.match(/^([^\s(\[;]+)/) || [])[1] || "", byIP: firstIP(byClause),
       proto: proto, tls: tls, tlsVer: tlsVer.replace(/_/g, ".").replace(/^TLSV/i, "TLS"), cipher: cipher,
-      auth: /^(ESMTPSA|ESMTPA|UTF8SMTPSA)$/.test(P), date: date,
+      auth: /^(ESMTPSA|ESMTPA|UTF8SMTPSA)$/.test(P.split(" ").pop()), date: date,
       providerInternal: (function () { var a = family(fromHost), b = family((byClause.match(/^([^\s(\[;]+)/) || [])[1]); return !!a && a === b; })(),
       unknownRdns: /\bunknown\b/i.test(fromClause), heloIsIP: V4.test(fromHost) || /^\[/.test(fromHost)
     };
@@ -197,7 +198,7 @@
 
   function family(host) {
     host = (host || "").toLowerCase();
-    if (/(^|\.)(outlook\.com|office365\.com|exchangelabs\.com|microsoft\.com|outbound\.protection\.outlook\.com)$/.test(host)) return "microsoft";
+    if (/(^|\.)(outlook\.com|office365\.com|exchangelabs\.com|microsoft\.com|bigfish\.com|frontbridge\.com|messaging\.microsoft\.com)$/.test(host) || /^(mail\d+-[a-z]{2,4}\d*|[a-z]{2,4}\d?ehs[a-z]{2,4}\d+)$/i.test(host)) return "microsoft";
     if (/(^|\.)(google\.com|gmail\.com|googlemail\.com)$/.test(host)) return "google";
     if (/(^|\.)(pphosted\.com|ppe-hosted\.com)$/.test(host)) return "proofpoint";
     if (/(^|\.)mimecast\.com$/.test(host)) return "mimecast";
@@ -232,6 +233,26 @@
       if (i > 0) o[p.slice(0, i).trim().toLowerCase()] = p.slice(i + 1).trim();
     });
     return o;
+  }
+
+  // Commonly impersonated brands and the registrable domains they really send from.
+  var BRANDS = {
+    PayPal: ["paypal.com", "paypal.me", "paypal-communication.com"], Microsoft: ["microsoft.com", "office.com", "office365.com", "outlook.com", "live.com", "microsoftonline.com", "sharepoint.com", "onmicrosoft.com", "hotmail.com"],
+    Apple: ["apple.com", "icloud.com"], Amazon: ["amazon.com", "amazon.in", "amazon.co.uk", "amazon.de", "amazonses.com", "aws.com"], Google: ["google.com", "gmail.com", "youtube.com", "googlemail.com"],
+    DocuSign: ["docusign.com", "docusign.net"], Netflix: ["netflix.com"], DHL: ["dhl.com", "dhl.de"], FedEx: ["fedex.com"], LinkedIn: ["linkedin.com"], Facebook: ["facebook.com", "facebookmail.com", "meta.com"],
+    Adobe: ["adobe.com"], Dropbox: ["dropbox.com", "dropboxmail.com"], Wells: ["wellsfargo.com"], Chase: ["chase.com", "jpmorgan.com"], HSBC: ["hsbc.com", "hsbc.co.uk", "hsbc.co.in"], Coinbase: ["coinbase.com"], Binance: ["binance.com"]
+  };
+  var BRAND_KEYS = { PayPal: "paypal", Microsoft: "microsoft", Apple: "apple", Amazon: "amazon", Google: "google", DocuSign: "docusign", Netflix: "netflix", DHL: "dhl", FedEx: "fedex", LinkedIn: "linkedin", Facebook: "facebook", Adobe: "adobe", Dropbox: "dropbox", Wells: "wellsfargo", Chase: "chasebank", HSBC: "hsbc", Coinbase: "coinbase", Binance: "binance" };
+  function brandOwns(b, d) { var o = orgDomain(d); return BRANDS[b].some(function (x) { return o === x || o.slice(-(x.length + 1)) === "." + x; }); }
+  function brandSpoof(d) {
+    var sk = skeleton(d) + "." + skeleton(d.split(".").slice(0, -2).join(".") || "x");
+    for (var b in BRAND_KEYS) if (sk.indexOf(BRAND_KEYS[b]) > -1 && !brandOwns(b, d)) return b === "Wells" ? "Wells Fargo" : b;
+    return null;
+  }
+  function brandInText(t) {
+    t = (t || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    for (var b in BRAND_KEYS) if (BRAND_KEYS[b].length > 4 && t.indexOf(BRAND_KEYS[b]) > -1) return b;
+    return null;
   }
 
   // ---------- Reference tables ----------
@@ -315,6 +336,12 @@
     }
     var myDomain = deliveredTo ? deliveredTo.domain : "";
     if (from && myDomain && lookalike(from.domain, myDomain)) add("identity", "high", "Lookalike of your domain", from.domain + " imitates " + orgDomain(myDomain) + ".", 30, H.get("From").i);
+    var brand = from ? brandSpoof(from.domain) : null;
+    if (brand && !(from && myDomain && lookalike(from.domain, myDomain))) add("identity", "high", "Impersonates " + brand, from.domain + " imitates " + brand + " but isn't one of its domains.", 28, H.get("From").i);
+    if (from && from.display && !brand) {
+      var dBrand = brandInText(from.display);
+      if (dBrand && !brandOwns(dBrand, from.domain)) add("identity", "med", "Display name uses the " + dBrand + " brand", "\"" + from.display + "\" sent from " + from.domain + ".", 12, H.get("From").i);
+    }
     if (from && /(^|\.)xn--/.test(from.domain)) add("identity", "med", "Internationalised (punycode) domain", from.domain + " may use look-alike characters.", 10, H.get("From").i);
     if (xOrigEmail && from && xOrigEmail.address !== from.address) add("custom", "med", "Originating account differs from From", xOrigEmail.address + " sent as " + from.address + ".", 8);
 
@@ -328,6 +355,7 @@
       hop.delay = hop.date !== null && prevDate !== null ? Math.round((hop.date - prevDate) / 1000) : null;
       if (hop.date !== null) prevDate = hop.date;
       hop.flags = [];
+      if (hop.providerInternal && hop.tls === "plain") hop.tls = "internal";
     });
     var connecting = tagList(H.val("X-Forefront-Antispam-Report")).cip || (ar && ar.spfIP) || (rspf && rspf.ip) || "";
     connecting = connecting ? cleanIP(connecting) : "";
@@ -336,7 +364,7 @@
     var originHop = null;
     for (var oi = 0; oi < hops.length; oi++) if (hops[oi].kind && hops[oi].kind.public) { originHop = hops[oi]; break; }
 
-    var maxDelay = 0, skew = false;
+    var maxDelay = 0, skew = false, heloBad = false;
     hops.forEach(function (hop) {
       if (hop.delay !== null) {
         if (hop.delay < -120) { hop.flags.push("Timestamp earlier than previous hop"); skew = true; }
@@ -347,14 +375,17 @@
         if (hop.tls === "plain") hop.flags.push("No encryption on an internet hop");
         if (hop.unknownRdns) hop.flags.push("No reverse DNS");
         if (hop.heloIsIP) hop.flags.push("Greeted with a raw IP");
+        else if (hop.fromHost && hop.fromHost.indexOf(".") === -1) hop.flags.push("Greeted as \"" + hop.fromHost + "\", not a domain name");
         var g = hop.geo;
         if (g && g.threats && g.threats.length) hop.flags.push("Listed: " + g.threats.join(", "));
         if (g && g.asnType === "hosting") hop.flags.push("Generic hosting network (" + g.asnLabel + ")");
       }
       hop.suspicious = hop.flags.some(function (f) { return /^(Listed|No reverse|Greeted|Generic hosting|No encryption)/.test(f); });
+      if (hop.flags.some(function (f) { return /^Greeted/.test(f); })) heloBad = true;
     });
     var susHops = hops.filter(function (h) { return h.suspicious; });
     if (susHops.length) add("routing", susHops.some(function (h) { return h.geo && h.geo.threats && h.geo.threats.length; }) ? "high" : "med", susHops.length + " suspicious hop" + (susHops.length > 1 ? "s" : ""), susHops.map(function (h) { return "Hop " + h.n + " " + (h.fromHost || h.ip) + ": " + h.flags.join(", "); }).join(". "), 0, susHops[0].headerIndex);
+    if (heloBad) add("routing", "med", "Sending machine didn't identify with a domain", "A hop greeted with a bare name or IP, typical of home PCs and bots rather than mail servers.", 8);
     if (skew) add("routing", "low", "Out-of-order timestamps", "A hop is stamped earlier than the one before it. Clock skew, or forged Received lines.", 6);
     if (maxDelay > 3600) add("routing", "low", "Long delivery delay", "One hop held the message for " + fmtDur(maxDelay) + ".", 4);
     var listedHops = hops.filter(function (h) { return h.geo && h.geo.threats && h.geo.threats.length; });
@@ -437,7 +468,7 @@
       var mm = mailer.match(RISKY_MAILERS[mi][0]);
       if (mm) { mailerNote = typeof RISKY_MAILERS[mi][1] === "function" ? RISKY_MAILERS[mi][1](mm) : RISKY_MAILERS[mi][1]; break; }
     }
-    if (mailerNote) add("custom", /outdated|phishing kits|spam/i.test(mailerNote) ? "med" : "low", "Suspicious mailer: " + mailer.split("(")[0].trim().slice(0, 40), mailerNote, /outdated|phishing kits|spam/i.test(mailerNote) ? 8 : 3, (H.get("X-Mailer") || H.get("User-Agent")).i);
+    if (mailerNote) add("custom", /outdated|phishing kits|spam|old mail client/i.test(mailerNote) ? "med" : "low", "Suspicious mailer: " + mailer.split("(")[0].trim().slice(0, 40), mailerNote, /outdated|phishing kits|spam|old mail client/i.test(mailerNote) ? 8 : 3, (H.get("X-Mailer") || H.get("User-Agent")).i);
     var GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     var nmid = H.val("X-MS-Exchange-Organization-Network-Message-Id"), tenant = H.val("X-MS-Exchange-CrossTenant-Id");
     if (nmid && !GUID.test(nmid)) add("custom", "med", "Malformed Network-Message-Id", "Not a valid Exchange identifier, so the header may be forged.", 8);

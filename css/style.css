@@ -409,3 +409,29 @@ body.is-dash .topbar, body.is-dash .footer { max-width: 1440px; }
 .share-li:hover { color: #6db3ff; } .share-x:hover { color: #fff; } .share-fb:hover { color: #7aa7ff; }
 body.is-dash .share { display: none; }
 @media (max-width: 560px) { .share-l { display: none; } .topbar-r { gap: 8px; } .share-btn { width: 30px; height: 30px; } }
+
+/* 1. Routing: vertical timeline */
+.vflow { list-style: none; margin: 0; padding: 0; }
+.vhop { display: grid; grid-template-columns: 72px minmax(0, 1fr); }
+.vrail { position: relative; display: flex; flex-direction: column; align-items: center; }
+.vrail .dot { position: relative; z-index: 1; margin-top: 12px; }
+.vline { position: absolute; top: 12px; bottom: -12px; left: 50%; width: 2px; margin-left: -1px; background: var(--line-strong); }
+.vdelay { position: absolute; top: calc(50% + 18px); left: 50%; transform: translate(-50%, -50%); z-index: 1; padding: 3px 4px; border-radius: 6px; background: var(--panel); font: 500 11px/1 var(--mono); color: var(--muted); white-space: nowrap; }
+.vdelay.d-warn { color: var(--warn); } .vdelay.d-bad { color: var(--bad); }
+.vcard { min-width: 0; margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(6, 14, 24, 0.55); display: grid; gap: 3px; font-size: 12.5px; }
+.vhop:last-child .vcard { margin-bottom: 0; }
+.hop-bad .vcard { border-color: rgba(255, 107, 107, 0.6); background: rgba(255, 107, 107, 0.07); }
+.hop-warn .vcard { border-color: rgba(255, 181, 71, 0.5); background: rgba(255, 181, 71, 0.05); }
+.vhead { display: flex; align-items: center; justify-content: space-between; gap: 6px 12px; flex-wrap: wrap; }
+.vhost { color: var(--text); font-size: 14px; font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.vhead .tags { margin-top: 0; }
+.vmeta { display: flex; flex-wrap: wrap; gap: 2px 16px; align-items: baseline; }
+.vip { color: var(--text); font-size: 13px; overflow-wrap: anywhere; }
+.vwhere, .vby { overflow-wrap: anywhere; }
+.vby .mono { color: var(--body); }
+.vcard .hop-flag { margin-top: 2px; }
+@media (max-width: 860px) {
+  .vhop { grid-template-columns: 52px minmax(0, 1fr); }
+  .vcard { padding: 10px 12px; }
+}
+.chips .pill { white-space: normal; max-width: 100%; overflow-wrap: anywhere; text-align: left; }

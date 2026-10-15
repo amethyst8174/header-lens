@@ -133,30 +133,45 @@
   // ---------- 1. Routing ----------
   function routing(r) {
     var hops = r.routing.hops;
-    var flow = h("ol", { class: "flow", "aria-label": "Delivery path, earliest hop first" });
+    function nextDelay(nx) {
+      if (nx.delay === null) return null;
+      var cls = nx.delay < -120 || nx.delay > 3600 ? "d-bad" : nx.delay > 600 ? "d-warn" : "";
+      return h("span", { class: "vdelay " + cls, title: "Time to hop " + nx.n, text: (nx.delay < 0 ? "−" : "+") + HL.fmtDur(nx.delay) });
+    }
+    // Vertical timeline: one full-width row per hop so long hostnames and IPv6 addresses never truncate.
+    var flow = h("ol", { class: "vflow", "aria-label": "Delivery path, earliest hop first" });
     if (!hops.length) flow.appendChild(h("li", { class: "empty", text: "No Received headers, so the delivery path can't be traced." }));
     hops.forEach(function (hop, i) {
       var st = hop.geo && hop.geo.threats && hop.geo.threats.length ? "bad" : hop.suspicious ? "warn" : hop.providerInternal || (hop.kind && !hop.kind.public) || !hop.ip ? "int" : "ok";
-      var label = hop.fromHost || hop.rdns || (hop.ip ? hop.ip : "local submission");
+      var label = hop.fromHost || hop.rdns || (hop.ip ? hop.ip : "Local submission");
       var isOrigin = r.routing.originHop === hop;
-      var delay = hop.delay === null ? "" : (hop.delay < 0 ? "−" : "+") + HL.fmtDur(hop.delay);
-      var delayCls = hop.delay === null ? "" : hop.delay < -120 ? "d-bad" : hop.delay > 3600 ? "d-bad" : hop.delay > 600 ? "d-warn" : "";
       var tlsTxt = hop.tls === "tls" ? (hop.tlsVer || "TLS") : hop.tls === "plain" ? "No TLS" : hop.tls === "internal" ? "Internal" : "TLS unknown";
-      var node = h("li", { class: "hop hop-" + st, title: hop.raw }, [
-        i ? h("span", { class: "link " + delayCls }, [s("svg", { class: "arrow", viewBox: "0 0 44 12", width: 44, height: 12, "aria-hidden": "true" }, [s("line", { x1: 0, y1: 6, x2: 38, y2: 6, "stroke-width": 2 }), s("path", { d: "M36 1l7 5-7 5z", "stroke-width": 0 })]), delay ? h("span", { class: "delay", text: delay }) : null]) : null,
-        h("div", { class: "hop-c" }, [
+      var g = hop.geo;
+      var where = g ? [g.country || g.cc, g.asn ? "AS" + g.asn + " " + g.asnName : ""].filter(Boolean).join(" · ") : (hop.kind && !hop.kind.public ? (hop.kind.label || "Private") + " network" : "");
+      var last = i === hops.length - 1;
+      var node = h("li", { class: "vhop hop-" + st }, [
+        h("div", { class: "vrail" }, [
           h("div", { class: "dot" }, h("span", { text: String(hop.n) })),
-          h("div", { class: "hop-t" }, [
-            h("strong", { class: "trunc", text: label }),
-            h("span", { class: "mono trunc", title: hop.ip, text: hop.ip || "no IP recorded" }),
-            h("span", { class: "mono muted", text: fmtClock(hop.date) }),
+          last ? null : h("span", { class: "vline" }),
+          last ? null : nextDelay(hops[i + 1])
+        ]),
+        h("div", { class: "vcard" }, [
+          h("div", { class: "vhead" }, [
+            h("strong", { class: "vhost", text: label }),
             h("span", { class: "tags" }, [
               isOrigin ? pill("blue", "Origin") : null,
               pill(hop.tls === "tls" ? "good" : hop.tls === "plain" ? "warn" : "neutral", tlsTxt, hop.tls === "tls" ? "lock" : null),
-              hop.geo && hop.geo.cc ? pill("neutral", hop.geo.cc) : null
-            ]),
-            hop.flags.length ? h("span", { class: "hop-flag", text: hop.flags.join(" · ") }) : null
-          ])
+              g && g.cc ? pill("neutral", g.cc) : null
+            ])
+          ]),
+          h("div", { class: "vmeta" }, [
+            h("span", { class: "mono vip", text: hop.ip || "No IP recorded" }),
+            h("span", { class: "mono muted", text: fmtTime(hop.date) }),
+            hop.rdns && hop.rdns !== label.toLowerCase() ? h("span", { class: "muted" }, ["rDNS ", h("span", { class: "mono", text: hop.rdns })]) : null
+          ]),
+          where ? h("div", { class: "vwhere muted", text: where }) : null,
+          hop.byHost ? h("div", { class: "vby" }, [h("span", { class: "muted", text: "Received by " }), h("span", { class: "mono", text: hop.byHost + (hop.byIP ? " (" + hop.byIP + ")" : "") }), hop.proto ? h("span", { class: "muted", text: " with " + hop.proto + (hop.auth ? " (authenticated)" : "") }) : null]) : null,
+          hop.flags.length ? h("div", { class: "hop-flag", text: hop.flags.join(" · ") }) : null
         ])
       ]);
       flow.appendChild(node);
