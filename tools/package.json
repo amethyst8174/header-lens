@@ -1,2 +1,1 @@
-{ "name": "header-lens-tools", "private": true, "type": "module",
-  "dependencies": { "d3-geo": "3.1.1", "topojson-client": "3.1.0", "world-atlas": "2.0.2", "i18n-iso-countries": "7.14.0" } }
+{"name":"header-lens-tools","private":true,"type":"module","dependencies":{"d3-geo":"3.1.1","i18n-iso-countries":"7.14.0","topojson-client":"3.1.0","world-atlas":"2.0.2"},"devDependencies":{"playwright":"1.56.0"}}

@@ -116,7 +116,9 @@
     analyzeBtn.textContent = "Analyzing…";
     setStatus("Loading offline IP data (first run only)…");
     loadData().then(function (db) {
-      var result = window.HL.analyze(input.value, { lookup: db ? window.HLGeo.lookup : null });
+      // Never score without the offline data: a partial analysis would give a different result for the same header.
+      if (!db) { setStatus("The offline IP data didn't load, so the analysis was stopped. Reload the page and try again.", "err"); return; }
+      var result = window.HL.analyze(input.value, { lookup: window.HLGeo.lookup, dataVersion: window.HLGeo.info() });
       window.HLDash.render(viewDash, result, { back: function () { clearAll(); input.focus(); } });
       viewInput.classList.add("hidden");
       viewDash.classList.remove("hidden");

@@ -1,0 +1,5 @@
+{
+  "phish.txt": { "verdict": "phish", "min": 80, "max": 100 },
+  "genuine.txt": { "verdict": "genuine", "min": 0, "max": 10 },
+  "long.txt": { "verdict": "phish", "min": 60, "max": 100 }
+}

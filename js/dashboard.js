@@ -138,9 +138,30 @@
         h("h2", { text: V.t }),
         h("p", { class: "v-meta", title: who + (subj ? " · " + subj : "") }, [h("span", { text: who }), subj ? h("span", { class: "v-subj", text: subj }) : null]),
         h("div", { class: "chips" }, reasons.length ? reasons.map(function (f) { return pill(f.sev === "high" ? "bad" : f.sev === "med" ? "warn" : "low", f.title); }).concat(goods.map(function (f) { return pill("good", f.title, "check"); }))
-          : goods.map(function (f) { return pill("good", f.title, "check"); }).concat([pill("good", "No risk signals found", "check")]))
+          : goods.map(function (f) { return pill("good", f.title, "check"); }).concat([pill("good", "No risk signals found", "check")])),
+        fingerprintLine(r)
       ])
     ]);
+  }
+
+  // Same canonical header + same engine + same data = same fingerprint = same score, in any browser.
+  function versionText(r) {
+    var d = r.dataVersion;
+    return "engine " + r.engine + (d ? " · IP data " + d.built + " · threat data " + d.threatBuilt : "");
+  }
+  function fingerprintLine(r) {
+    var fp = h("span", { class: "mono", text: "computing…" });
+    var line = h("p", { class: "v-fp", title: "Identical headers analysed with the same engine and data always produce this fingerprint and the same score." }, ["Fingerprint ", fp, " · " + versionText(r)]);
+    fingerprint(r).then(function (hex) { fp.textContent = hex.slice(0, 16); fp.setAttribute("title", hex); r.fingerprint = hex; });
+    return line;
+  }
+  function fingerprint(r) {
+    if (r.fingerprint) return Promise.resolve(r.fingerprint);
+    if (!root.crypto || !root.crypto.subtle) return Promise.resolve("unavailable");
+    var payload = r.engine + "\n" + (r.dataVersion ? r.dataVersion.built + "|" + r.dataVersion.threatBuilt : "") + "\n" + r.canonical;
+    return root.crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload)).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+    });
   }
 
   // ---------- 1. Routing ----------
@@ -467,7 +488,7 @@
 
   // ---------- Exports (generated in memory, saved only on click) ----------
   function summary(r) {
-    var lines = ["header-lens report", "Verdict: " + r.verdict + " (" + r.score + "/100, " + r.confidence + " confidence)"];
+    var lines = ["header-lens report", "Verdict: " + r.verdict + " (" + r.score + "/100, " + r.confidence + " confidence)", "Fingerprint: " + (r.fingerprint || "") + " (" + versionText(r) + ")"];
     if (r.identity.from) lines.push("From: " + r.identity.from.raw);
     if (r.metadata.subject) lines.push("Subject: " + r.metadata.subject);
     lines.push("Auth: " + r.auth.checks.map(function (c) { return c.key + "=" + c.result; }).join(", "));
@@ -479,7 +500,7 @@
   }
   function csv(r) {
     var q = function (v) { v = String(v === null || v === undefined ? "" : v); return /^[=+\-@\t\r]/.test(v) ? "\"'" + v.replace(/"/g, "\"\"") + "\"" : "\"" + v.replace(/"/g, "\"\"") + "\""; };
-    var rows = [["type", "section", "severity", "name", "value"]];
+    var rows = [["type", "section", "severity", "name", "value"], ["meta", "", "", "verdict", r.verdict + " " + r.score + "/100"], ["meta", "", "", "fingerprint", (r.fingerprint || "") + " (" + versionText(r) + ")"]];
     r.findings.forEach(function (f) { rows.push(["finding", f.section, f.sev, f.title, f.detail]); });
     r.headers.forEach(function (x) { rows.push(["header", sectOf(x.name), "", x.name, x.value]); });
     return rows.map(function (row) { return row.map(q).join(","); }).join("\r\n");

@@ -30,6 +30,8 @@ Verify it yourself: open DevTools after pasting headers. The Network tab shows o
 
 Every finding links to its source header in the collapsible raw header pane. Reports can be copied as text or exported as CSV; both are generated in the browser.
 
+**Consistent results.** The same header always gives the same verdict, score and findings. The engine uses no randomness, clock or browser-specific date parsing, ignores harmless differences (line endings, trailing spaces, BOM, an appended body), and refuses to score if the offline data fails to load. Each dashboard shows a fingerprint (SHA-256 of the canonical header, engine version and data versions): matching fingerprints guarantee matching scores. A score can only change when the engine version or the offline data date changes, and both are shown next to the fingerprint. The `Engine tests` workflow checks this on every push, including across Chromium, Firefox and WebKit.
+
 The verdict is a weighted score: **55+ likely phishing**, **25–54 suspicious**, **below 25 likely genuine**. It is decision support, not a replacement for analyst judgement.
 
 ## Offline data

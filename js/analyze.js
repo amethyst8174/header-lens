@@ -51,17 +51,29 @@
   }
   function atobSafe(s) { return typeof atob === "function" ? atob(s) : Buffer.from(s, "base64").toString("binary"); }
 
-  function parseDate(s) {
-    if (!s) return null;
-    var t = s.replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
-    t = t.replace(/^([A-Za-z]{3}),?\s*/, "$1, ");
-    var d = Date.parse(t);
-    if (isNaN(d)) {
-      var m = t.match(/(\d{1,2}) ([A-Za-z]{3}) (\d{4}) (\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?) ?([+-]\d{4}|[A-Z]{1,5})?/);
-      if (m) d = Date.parse(m[1] + " " + m[2] + " " + m[3] + " " + m[4].replace(/\.\d+$/, "") + " " + (m[5] || "+0000"));
+  // Strict RFC 5322 date parser built on Date.UTC, so every browser reads a timestamp the same way.
+  var MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+  var ZONES = { ut: 0, utc: 0, gmt: 0, z: 0, est: -300, edt: -240, cst: -360, cdt: -300, mst: -420, mdt: -360, pst: -480, pdt: -420 };
+  function parseDate(str) {
+    if (!str) return null;
+    var t = str.replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
+    var m = t.match(/(\d{1,2})[ -]([A-Za-z]{3})[a-z]*[ -](\d{2,4})[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?\s*([+-]\d{2}:?\d{2}|[A-Za-z]{1,5})?/);
+    var y, mo, d, hh, mi, ss, zone;
+    if (m) { d = +m[1]; mo = MONTHS[m[2].toLowerCase()]; y = +m[3]; hh = +m[4]; mi = +m[5]; ss = +(m[6] || 0); zone = m[7] || ""; }
+    else {
+      m = t.match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?\s*(Z|[+-]\d{2}:?\d{2})?/i);
+      if (!m) return null;
+      y = +m[1]; mo = +m[2] - 1; d = +m[3]; hh = +m[4]; mi = +m[5]; ss = +(m[6] || 0); zone = m[7] || "";
     }
-    return isNaN(d) ? null : d;
+    if (mo === undefined || mo < 0 || mo > 11 || d < 1 || d > 31 || hh > 23 || mi > 59 || ss > 60) return null;
+    if (y < 100) y += y < 50 ? 2000 : 1900;
+    var off = 0, z = zone.toLowerCase();
+    var zm = z.match(/^([+-])(\d{2}):?(\d{2})$/);
+    if (zm) off = (zm[1] === "-" ? -1 : 1) * (+zm[2] * 60 + +zm[3]);
+    else if (ZONES[z] !== undefined) off = ZONES[z];
+    return Date.UTC(y, mo, d, hh, mi, ss) - off * 60000;
   }
+
 
   // ---------- Addresses and domains ----------
   function parseAddress(v) {
@@ -266,10 +278,19 @@
   var HOSTING_ASN = { 14061: "DigitalOcean", 16276: "OVH", 24940: "Hetzner", 63949: "Akamai Linode", 20473: "Vultr", 51167: "Contabo", 45102: "Alibaba Cloud", 132203: "Tencent Cloud", 31898: "Oracle Cloud", 60781: "LeaseWeb", 16265: "LeaseWeb", 9009: "M247", 36352: "ColoCrossing", 53667: "FranTech", 212238: "Datacamp", 49505: "Selectel", 57523: "Chang Way", 202425: "IP Volume", 211252: "Delis", 44477: "Stark Industries", 399629: "BL Networks", 8100: "QuadraNet", 62904: "Eonix", 40021: "Contabo US", 46664: "VolumeDrive", 35916: "Multacom", 207083: "Quintex", 197540: "netcup", 12876: "Scaleway", 3214: "xTom", 59253: "Leaseweb Asia", 136907: "Huawei Cloud", 55990: "Huawei Cloud", 37963: "Alibaba", 24429: "Alibaba", 133752: "Leaseweb", 22612: "Namecheap", 61317: "Digital Ocean", 398101: "GoDaddy", 26496: "GoDaddy", 47583: "Hostinger", 204915: "Hostinger" };
 
   // ---------- Main analysis ----------
+  // Bump when scoring rules change, so a different score for the same header is always explainable.
+  var ENGINE_VERSION = "1.1.0";
+
+  // Canonical form of the input: what the fingerprint is computed over. Line endings, a BOM,
+  // leading blank lines and trailing spaces don't change the analysis, so they don't change the fingerprint.
+  function canonical(text) {
+    return headerBlock(text).split("\n").map(function (l) { return l.replace(/[ \t]+$/, ""); }).join("\n");
+  }
+
   function analyze(text, ctx) {
     ctx = ctx || {};
     var lookup = ctx.lookup || function () { return null; };
-    var list = parse(text);
+    var list = parse(canonical(text));
     var H = new Headers(list);
     var findings = [];
     function add(section, sev, title, detail, points, header) { findings.push({ section: section, sev: sev, title: title, detail: detail || "", points: points || 0, header: header }); }
@@ -485,6 +506,7 @@
     findings.sort(function (a, b) { return sevRank[a.sev] - sevRank[b.sev] || b.points - a.points; });
 
     return {
+      engine: ENGINE_VERSION, canonical: canonical(text), dataVersion: ctx.dataVersion || null,
       headers: list, findings: findings, score: score, verdict: verdict, confidence: confidence,
       routing: { hops: hops, returnPath: returnPath, deliveredTo: deliveredTo, xOrigIP: xoip, connecting: connecting, originHop: originHop, maxDelay: maxDelay },
       identity: { from: from, replyTo: replyTo, sender: sender, returnPath: returnPath, senderIP: firstIP(H.val("X-Sender-IP")), matrix: matrix, myDomain: myDomain },
@@ -511,7 +533,7 @@
     return Math.floor(sec / 86400) + "d " + Math.floor((sec % 86400) / 3600) + "h";
   }
 
-  var api = { parse: parse, headerBlock: headerBlock, analyze: analyze, ipKind: ipKind, v6groups: v6groups, orgDomain: orgDomain, lookalike: lookalike, decodeWords: decodeWords, fmtDur: fmtDur, MAIL_ASN: MAIL_ASN, HOSTING_ASN: HOSTING_ASN };
+  var api = { ENGINE_VERSION: ENGINE_VERSION, canonical: canonical, parse: parse, headerBlock: headerBlock, analyze: analyze, ipKind: ipKind, v6groups: v6groups, orgDomain: orgDomain, lookalike: lookalike, decodeWords: decodeWords, fmtDur: fmtDur, MAIL_ASN: MAIL_ASN, HOSTING_ASN: HOSTING_ASN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.HL = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

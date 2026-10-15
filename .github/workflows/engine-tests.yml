@@ -1,0 +1,31 @@
+name: Engine tests
+
+# Same header in, same verdict and score out: checks repeat runs and harmless input variations
+# (line endings, trailing spaces, BOM, appended body) give identical results.
+on:
+  push:
+  pull_request:
+  workflow_run:
+    workflows: ["Refresh offline data"]
+    types: [completed]
+
+jobs:
+  consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/test-engine.mjs
+
+  cross-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix tools --no-audit --no-fund
+      - run: npx --prefix tools playwright install --with-deps chromium firefox webkit
+      - run: node tools/browser-consistency.mjs chromium,firefox,webkit

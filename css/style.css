@@ -480,3 +480,5 @@ body.is-dash .topbar, body.is-dash .footer { max-width: 1440px; }
 }
 .hop { flex: 1 0 250px; }
 @media (max-width: 860px) { .hop { flex: none; } }
+.v-fp { margin: 10px 0 0; font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; }
+.v-fp .mono { font-size: 11.5px; color: var(--body); }
