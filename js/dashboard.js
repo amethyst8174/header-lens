@@ -57,7 +57,8 @@
     back: "M15 6l-6 6 6 6",
     panel: "M4 5h16v14H4zM15 5v14",
     search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4",
-    image: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.01"
+    image: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.01",
+    expand: "M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"
   };
   function icon(name, cls) {
     return s("svg", { viewBox: "0 0 24 24", class: "ic " + (cls || ""), "aria-hidden": "true", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" }, s("path", { d: ICONS[name] }));
@@ -79,17 +80,29 @@
 
   var current = null, onJump = null;
 
+  // Text with optional line breaks after dots, colons, hyphens and slashes, so hostnames and IPs wrap at separators.
+  function breakable(text) {
+    var span = document.createElement("span");
+    String(text).split(/(?<=[.:\-/@_])/).forEach(function (part, i) {
+      if (i) span.appendChild(document.createElement("wbr"));
+      span.appendChild(document.createTextNode(part));
+    });
+    return span;
+  }
+
   // ---------- Card frame ----------
-  function card(n, key, title, ic, sub, findings, body, wide) {
+  function card(n, key, title, ic, sub, findings, body, wide, action) {
     var mine = findings.filter(function (f) { return f.section === key && f.sev !== "good"; });
     var worst = mine.length ? mine[0].sev : "ok";
     var head = h("div", { class: "card-h" }, [
       h("span", { class: "card-ic ci-" + key }, icon(ic)),
       h("div", { class: "card-t" }, [h("h3", null, [h("span", { class: "card-n", text: n }), title]), sub ? h("p", { text: sub }) : null]),
+      action || null,
       mine.length ? h("span", { class: "count sev-" + worst, title: mine.length + " finding" + (mine.length > 1 ? "s" : "") }, [icon(SEV[worst].icon), String(mine.length)]) : h("span", { class: "count sev-ok", title: "No issues" }, [icon("check"), "Clear"])
     ]);
     var list = mine.length ? h("ul", { class: "findings" }, mine.map(findingRow)) : null;
-    return h("section", { class: "card" + (wide ? " wide" : ""), "aria-label": title }, [head, body, list]);
+    var cls = wide === true ? " wide" : typeof wide === "string" ? " " + wide : "";
+    return h("section", { class: "card card-" + key + cls, "aria-label": title }, [head, body, list]);
   }
   function findingRow(f) {
     var row = h("li", { class: "finding sev-" + f.sev }, [icon(SEV[f.sev].icon), h("div", null, [h("strong", { text: f.title }), f.detail ? h("span", { text: f.detail }) : null])]);
@@ -131,50 +144,38 @@
   }
 
   // ---------- 1. Routing ----------
+  function hopState(r, hop) {
+    return hop.geo && hop.geo.threats && hop.geo.threats.length ? "bad" : hop.suspicious ? "warn" : hop.providerInternal || (hop.kind && !hop.kind.public) || !hop.ip ? "int" : "ok";
+  }
+  function tlsText(hop) { return hop.tls === "tls" ? (hop.tlsVer || "TLS") : hop.tls === "plain" ? "No TLS" : hop.tls === "internal" ? "Internal" : "TLS unknown"; }
+
+  // Horizontal flow for the card: compact boxes, long values wrap instead of being cut off.
   function routing(r) {
     var hops = r.routing.hops;
-    function nextDelay(nx) {
-      if (nx.delay === null) return null;
-      var cls = nx.delay < -120 || nx.delay > 3600 ? "d-bad" : nx.delay > 600 ? "d-warn" : "";
-      return h("span", { class: "vdelay " + cls, title: "Time to hop " + nx.n, text: (nx.delay < 0 ? "−" : "+") + HL.fmtDur(nx.delay) });
-    }
-    // Vertical timeline: one full-width row per hop so long hostnames and IPv6 addresses never truncate.
-    var flow = h("ol", { class: "vflow", "aria-label": "Delivery path, earliest hop first" });
+    var flow = h("ol", { class: "flow", "aria-label": "Delivery path, earliest hop first" });
     if (!hops.length) flow.appendChild(h("li", { class: "empty", text: "No Received headers, so the delivery path can't be traced." }));
     hops.forEach(function (hop, i) {
-      var st = hop.geo && hop.geo.threats && hop.geo.threats.length ? "bad" : hop.suspicious ? "warn" : hop.providerInternal || (hop.kind && !hop.kind.public) || !hop.ip ? "int" : "ok";
+      var st = hopState(r, hop);
       var label = hop.fromHost || hop.rdns || (hop.ip ? hop.ip : "Local submission");
-      var isOrigin = r.routing.originHop === hop;
-      var tlsTxt = hop.tls === "tls" ? (hop.tlsVer || "TLS") : hop.tls === "plain" ? "No TLS" : hop.tls === "internal" ? "Internal" : "TLS unknown";
-      var g = hop.geo;
-      var where = g ? [g.country || g.cc, g.asn ? "AS" + g.asn + " " + g.asnName : ""].filter(Boolean).join(" · ") : (hop.kind && !hop.kind.public ? (hop.kind.label || "Private") + " network" : "");
-      var last = i === hops.length - 1;
-      var node = h("li", { class: "vhop hop-" + st }, [
-        h("div", { class: "vrail" }, [
+      var delay = hop.delay === null ? "" : (hop.delay < 0 ? "−" : "+") + HL.fmtDur(hop.delay);
+      var delayCls = hop.delay === null ? "" : hop.delay < -120 || hop.delay > 3600 ? "d-bad" : hop.delay > 600 ? "d-warn" : "";
+      flow.appendChild(h("li", { class: "hop hop-" + st, title: hop.raw }, [
+        i ? h("span", { class: "link " + delayCls }, [s("svg", { class: "arrow", viewBox: "0 0 44 12", width: 44, height: 12, "aria-hidden": "true" }, [s("line", { x1: 0, y1: 6, x2: 38, y2: 6, "stroke-width": 2 }), s("path", { d: "M36 1l7 5-7 5z", "stroke-width": 0 })]), delay ? h("span", { class: "delay", text: delay }) : null]) : null,
+        h("div", { class: "hop-c" }, [
           h("div", { class: "dot" }, h("span", { text: String(hop.n) })),
-          last ? null : h("span", { class: "vline" }),
-          last ? null : nextDelay(hops[i + 1])
-        ]),
-        h("div", { class: "vcard" }, [
-          h("div", { class: "vhead" }, [
-            h("strong", { class: "vhost", text: label }),
+          h("div", { class: "hop-t" }, [
+            h("strong", { class: "wrap" }, breakable(label)),
+            h("span", { class: "mono wrap" }, breakable(hop.ip || "No IP recorded")),
+            h("span", { class: "mono muted", text: fmtClock(hop.date) }),
             h("span", { class: "tags" }, [
-              isOrigin ? pill("blue", "Origin") : null,
-              pill(hop.tls === "tls" ? "good" : hop.tls === "plain" ? "warn" : "neutral", tlsTxt, hop.tls === "tls" ? "lock" : null),
-              g && g.cc ? pill("neutral", g.cc) : null
-            ])
-          ]),
-          h("div", { class: "vmeta" }, [
-            h("span", { class: "mono vip", text: hop.ip || "No IP recorded" }),
-            h("span", { class: "mono muted", text: fmtTime(hop.date) }),
-            hop.rdns && hop.rdns !== label.toLowerCase() ? h("span", { class: "muted" }, ["rDNS ", h("span", { class: "mono", text: hop.rdns })]) : null
-          ]),
-          where ? h("div", { class: "vwhere muted", text: where }) : null,
-          hop.byHost ? h("div", { class: "vby" }, [h("span", { class: "muted", text: "Received by " }), h("span", { class: "mono", text: hop.byHost + (hop.byIP ? " (" + hop.byIP + ")" : "") }), hop.proto ? h("span", { class: "muted", text: " with " + hop.proto + (hop.auth ? " (authenticated)" : "") }) : null]) : null,
-          hop.flags.length ? h("div", { class: "hop-flag", text: hop.flags.join(" · ") }) : null
+              r.routing.originHop === hop ? pill("blue", "Origin") : null,
+              pill(hop.tls === "tls" ? "good" : hop.tls === "plain" ? "warn" : "neutral", tlsText(hop), hop.tls === "tls" ? "lock" : null),
+              hop.geo && hop.geo.cc ? pill("neutral", hop.geo.cc) : null
+            ]),
+            hop.flags.length ? h("span", { class: "hop-flag", text: hop.flags.join(" · ") }) : null
+          ])
         ])
-      ]);
-      flow.appendChild(node);
+      ]));
     });
     var legend = h("div", { class: "legend" }, [
       h("span", null, [h("i", { class: "lg lg-ok" }), "External, no issues"]), h("span", null, [h("i", { class: "lg lg-warn" }), "Suspicious"]),
@@ -188,6 +189,68 @@
     ]);
     return h("div", null, [flow, legend, facts]);
   }
+
+  // Vertical timeline with every detail, shown in the "View full details" dialog.
+  function routingFull(r) {
+    var hops = r.routing.hops;
+    function nextDelay(nx) {
+      if (nx.delay === null) return null;
+      var cls = nx.delay < -120 || nx.delay > 3600 ? "d-bad" : nx.delay > 600 ? "d-warn" : "";
+      return h("span", { class: "vdelay " + cls, title: "Time to hop " + nx.n, text: (nx.delay < 0 ? "−" : "+") + HL.fmtDur(nx.delay) });
+    }
+    // Vertical timeline: one full-width row per hop so long hostnames and IPv6 addresses never truncate.
+    var flow = h("ol", { class: "vflow", "aria-label": "Delivery path, earliest hop first" });
+    if (!hops.length) flow.appendChild(h("li", { class: "empty", text: "No Received headers, so the delivery path can't be traced." }));
+    hops.forEach(function (hop, i) {
+      var st = hopState(r, hop);
+      var label = hop.fromHost || hop.rdns || (hop.ip ? hop.ip : "Local submission");
+      var isOrigin = r.routing.originHop === hop;
+      var tlsTxt = tlsText(hop);
+      var g = hop.geo;
+      var where = g ? [g.country || g.cc, g.asn ? "AS" + g.asn + " " + g.asnName : ""].filter(Boolean).join(" · ") : (hop.kind && !hop.kind.public ? (hop.kind.label || "Private") + " network" : "");
+      var last = i === hops.length - 1;
+      var node = h("li", { class: "vhop hop-" + st }, [
+        h("div", { class: "vrail" }, [
+          h("div", { class: "dot" }, h("span", { text: String(hop.n) })),
+          last ? null : h("span", { class: "vline" }),
+          last ? null : nextDelay(hops[i + 1])
+        ]),
+        h("div", { class: "vcard" }, [
+          h("div", { class: "vhead" }, [
+            h("strong", { class: "vhost" }, breakable(label)),
+            h("span", { class: "tags" }, [
+              isOrigin ? pill("blue", "Origin") : null,
+              pill(hop.tls === "tls" ? "good" : hop.tls === "plain" ? "warn" : "neutral", tlsTxt, hop.tls === "tls" ? "lock" : null),
+              g && g.cc ? pill("neutral", g.cc) : null
+            ])
+          ]),
+          h("div", { class: "vmeta" }, [
+            h("span", { class: "mono vip" }, breakable(hop.ip || "No IP recorded")),
+            h("span", { class: "mono muted", text: fmtTime(hop.date) }),
+            hop.rdns && hop.rdns !== label.toLowerCase() ? h("span", { class: "muted" }, ["rDNS ", h("span", { class: "mono", text: hop.rdns })]) : null
+          ]),
+          where ? h("div", { class: "vwhere muted", text: where }) : null,
+          hop.byHost ? h("div", { class: "vby" }, [h("span", { class: "muted", text: "Received by " }), h("span", { class: "mono", text: hop.byHost + (hop.byIP ? " (" + hop.byIP + ")" : "") }), hop.proto ? h("span", { class: "muted", text: " with " + hop.proto + (hop.auth ? " (authenticated)" : "") }) : null]) : null,
+          hop.flags.length ? h("div", { class: "hop-flag", text: hop.flags.join(" · ") }) : null
+        ])
+      ]);
+      flow.appendChild(node);
+    });
+    return flow;
+  }
+
+  function routingDialog(r) {
+    var close = h("button", { class: "icon-btn", type: "button", "aria-label": "Close", title: "Close" }, icon("x"));
+    var dlg = h("dialog", { class: "modal", "aria-labelledby": "rt-title" }, h("div", { class: "modal-in" }, [
+      h("div", { class: "modal-h" }, [h("span", { class: "card-ic ci-routing" }, icon("route")), h("div", { class: "card-t" }, [h("h3", { id: "rt-title", text: "Routing path · full details" }), h("p", { text: r.routing.hops.length + " hops, earliest first · times in UTC" })]), close]),
+      h("div", { class: "modal-b" }, routingFull(r))
+    ]));
+    close.addEventListener("click", function () { dlg.close(); });
+    // Clicking the dimmed area outside the panel closes it.
+    dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+    return dlg;
+  }
+
 
   // ---------- 2. Identity ----------
   function identity(r) {
@@ -302,7 +365,7 @@
     var rows = ips.length ? h("div", { class: "iptable", role: "table", "aria-label": "IP addresses" }, [h("div", { class: "ipr iph", role: "row" }, ["IP address", "Role", "Location / network", "Reputation"].map(function (t) { return h("span", { role: "columnheader", text: t }); }))].concat(ips.map(function (ip) {
       var st = ipStatus(ip), g = ip.geo;
       return h("div", { class: "ipr", role: "row" }, [
-        h("span", { class: "mono", role: "cell", title: ip.ip, text: ip.ip }),
+        h("span", { class: "mono", role: "cell", title: ip.ip }, breakable(ip.ip)),
         h("span", { role: "cell", class: "muted", title: ip.roles.join(", "), text: ip.roles.join(", ") }),
         h("span", { role: "cell", title: g ? (g.asn ? "AS" + g.asn + " " + g.asnName : "") : "" }, g ? [g.country || "Unknown", h("span", { class: "muted mono", text: g.asn ? " · AS" + g.asn + " " + g.asnName.split(" ")[0] : "" })] : (ip.kind && !ip.kind.public ? "Internal network" : "—")),
         h("span", { role: "cell" }, pill(st.k, st.t))
@@ -482,16 +545,18 @@
       ])
     ]);
     var cards = h("div", { class: "cards" }, [
-      card("1", "routing", "Routing path", "route", r.routing.hops.length + " hop" + (r.routing.hops.length === 1 ? "" : "s") + ", earliest first", F, routing(r), true),
+      card("1", "routing", "Routing path", "route", r.routing.hops.length + " hop" + (r.routing.hops.length === 1 ? "" : "s") + ", earliest first", F, routing(r), true,
+        r.routing.hops.length ? h("button", { class: "btn btn-ghost btn-sm", type: "button", onclick: function () { dlg.showModal(); } }, [icon("expand"), "View full details"]) : null),
       card("2", "identity", "Sender identity", "user", "Who the message claims to be from", F, identity(r)),
       card("3", "auth", "Authentication", "shield", "SPF, DKIM, DMARC, ARC", F, auth(r)),
       card("4", "metadata", "Message metadata", "file", "Message details and delivery timeline", F, metadata(r), true),
-      card("5", "geo", "IP geolocation and reputation", "globe", "Public IPs from the headers", F, geo(r)),
-      card("6", "security", "Security and encryption", "lock", "Transport encryption per hop", F, security(r)),
+      card("5", "geo", "IP geolocation and reputation", "globe", "Public IPs from the headers", F, geo(r), "span-wide"),
+      card("6", "security", "Security and encryption", "lock", "Transport encryption per hop", F, security(r), "span-narrow"),
       card("7", "malware", "Anti-malware and anti-spam", "bug", "Gateway and Exchange Online verdicts", F, antispam(r)),
       card("8", "custom", "Custom headers", "code", "Client and Exchange identifiers", F, custom(r))
     ]);
-    var main = h("div", { class: "dash-main" }, [toolbar, verdict(r), cards]);
+    var dlg = routingDialog(r);
+    var main = h("div", { class: "dash-main" }, [toolbar, verdict(r), cards, dlg]);
     var pane = rawPane(r);
     var layout = h("div", { class: "dash-layout" }, [main, pane]);
     container.appendChild(layout);
