@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Privacy enforcement: the browser blocks every outbound request and form submission from this page. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
   <meta name="referrer" content="no-referrer">
   <title>header-lens · Email header analyzer</title>
   <meta name="description" content="Visual email header analysis for SOC analysts. Runs entirely in your browser. Nothing is stored.">
@@ -112,6 +112,7 @@
   <script src="js/config.js"></script>
   <script src="js/analyze.js"></script>
   <script src="js/geodb.js"></script>
+  <script src="assets/vendor/html2canvas.min.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/app.js"></script>
 </body>

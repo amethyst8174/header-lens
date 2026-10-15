@@ -117,7 +117,7 @@
     setStatus("Loading offline IP data (first run only)…");
     loadData().then(function (db) {
       var result = window.HL.analyze(input.value, { lookup: db ? window.HLGeo.lookup : null });
-      window.HLDash.render(viewDash, result, { back: function () { showInput(); input.focus(); } });
+      window.HLDash.render(viewDash, result, { back: function () { clearAll(); input.focus(); } });
       viewInput.classList.add("hidden");
       viewDash.classList.remove("hidden");
       document.body.classList.add("is-dash");

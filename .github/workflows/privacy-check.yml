@@ -12,9 +12,14 @@ jobs:
         run: |
           set -e
           fail=0
-          if grep -rnE "localStorage|sessionStorage|indexedDB|document\.cookie|serviceWorker|caches\.open" --include=*.js --include=*.html .; then
+          # Vendored libraries are reviewed once and pinned by checksum instead of grepped.
+          if ! sha256sum -c assets/vendor/SHA256SUMS; then
+            echo "::error::Vendored library changed without updating SHA256SUMS"; fail=1; fi
+          if [ "$(ls assets/vendor/*.js | wc -l)" -ne "$(wc -l < assets/vendor/SHA256SUMS)" ]; then
+            echo "::error::Unpinned file in assets/vendor"; fail=1; fi
+          if grep -rnE "localStorage|sessionStorage|indexedDB|document\.cookie|serviceWorker|caches\.open" --include=*.js --include=*.html --exclude-dir=vendor .; then
             echo "::error::Browser storage API found"; fail=1; fi
-          if grep -rnE "fetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource" --include=*.js .; then
+          if grep -rnE "fetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource" --include=*.js --exclude-dir=vendor .; then
             echo "::error::Network call found (live lookups must go through the approved lookup module)"; fail=1; fi
           if grep -rnE "<(script|link|img)[^>]+(src|href)=\"https?://" --include=*.html .; then
             echo "::error::Third-party script, style or image found"; fail=1; fi

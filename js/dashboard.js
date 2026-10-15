@@ -56,7 +56,8 @@
     download: "M12 4v11M7 10l5 5 5-5M5 20h14",
     back: "M15 6l-6 6 6 6",
     panel: "M4 5h16v14H4zM15 5v14",
-    search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4"
+    search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4",
+    image: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.01"
   };
   function icon(name, cls) {
     return s("svg", { viewBox: "0 0 24 24", class: "ic " + (cls || ""), "aria-hidden": "true", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" }, s("path", { d: ICONS[name] }));
@@ -142,7 +143,7 @@
       var delayCls = hop.delay === null ? "" : hop.delay < -120 ? "d-bad" : hop.delay > 3600 ? "d-bad" : hop.delay > 600 ? "d-warn" : "";
       var tlsTxt = hop.tls === "tls" ? (hop.tlsVer || "TLS") : hop.tls === "plain" ? "No TLS" : hop.tls === "internal" ? "Internal" : "TLS unknown";
       var node = h("li", { class: "hop hop-" + st, title: hop.raw }, [
-        i ? h("span", { class: "link " + delayCls }, [h("span", { class: "arrow" }), delay ? h("span", { class: "delay", text: delay }) : null]) : null,
+        i ? h("span", { class: "link " + delayCls }, [s("svg", { class: "arrow", viewBox: "0 0 44 12", width: 44, height: 12, "aria-hidden": "true" }, [s("line", { x1: 0, y1: 6, x2: 38, y2: 6, "stroke-width": 2 }), s("path", { d: "M36 1l7 5-7 5z", "stroke-width": 0 })]), delay ? h("span", { class: "delay", text: delay }) : null]) : null,
         h("div", { class: "hop-c" }, [
           h("div", { class: "dot" }, h("span", { text: String(hop.n) })),
           h("div", { class: "hop-t" }, [
@@ -278,6 +279,7 @@
         var p = pins[cc];
         map.appendChild(s("g", { class: "pin pin-" + p.st, transform: "translate(" + c.x + " " + c.y + ")" }, [
           s("circle", { r: 16, class: "pin-halo" }), s("circle", { r: 6.5, class: "pin-dot" }),
+          s("text", { x: c.x > W.w * 0.82 ? -12 : 12, y: 4, "text-anchor": c.x > W.w * 0.82 ? "end" : "start", class: "pin-label", text: W.names[cc] || c.n || cc }),
           s("title", { text: (W.names[cc] || cc) + "\n" + p.ips.join("\n") })
         ]));
       });
@@ -380,7 +382,7 @@
       count.textContent = q ? shown + " / " + r.headers.length : String(r.headers.length);
     });
     return h("aside", { class: "raw", id: "raw-pane", "aria-label": "Raw headers" }, [
-      h("div", { class: "raw-h" }, [h("button", { class: "icon-btn", type: "button", id: "raw-toggle", "aria-expanded": "true", "aria-controls": "raw-body", title: "Collapse raw headers" }, icon("panel")), h("h3", null, ["Raw headers ", count])]),
+      h("div", { class: "raw-h" }, [h("button", { class: "icon-btn", type: "button", id: "raw-toggle", "aria-expanded": "true", "aria-controls": "raw-body", title: "Collapse raw headers" }, icon("panel")), h("h3", { text: "Raw headers" }), count]),
       h("div", { class: "raw-body", id: "raw-body" }, [h("div", { class: "raw-search" }, [icon("search"), filter]), list])
     ]);
   }
@@ -411,6 +413,46 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
+  // Image export: draws the dashboard to a canvas in this tab (no network) and opens the PNG in a new tab.
+  function svgInline(orig, clone) {
+    var props = ["fill", "stroke", "stroke-width", "stroke-dasharray", "opacity", "font-family", "font-size", "font-weight", "paint-order", "stroke-linejoin"];
+    var a = orig.querySelectorAll("svg, svg *"), b = clone.querySelectorAll("svg, svg *");
+    for (var i = 0; i < a.length && i < b.length; i++) {
+      var cs = getComputedStyle(a[i]);
+      props.forEach(function (p) { var v = cs.getPropertyValue(p); if (v && v !== "normal") b[i].setAttribute(p, v); });
+      if (a[i].tagName.toLowerCase() === "svg") { var r = a[i].getBoundingClientRect(); b[i].setAttribute("width", r.width); b[i].setAttribute("height", r.height); }
+    }
+  }
+  function exportImage(btn, target) {
+    if (typeof root.html2canvas !== "function") return;
+    var tab = window.open("", "_blank");
+    if (tab) { tab.document.title = "header-lens report"; tab.document.body.style.background = "#08111d"; tab.document.body.appendChild(tab.document.createTextNode("Rendering…")); tab.document.body.style.color = "#a9bbcf"; tab.document.body.style.font = "14px sans-serif"; }
+    var label = btn.querySelector("span"), old = label.textContent;
+    label.textContent = "Rendering…"; btn.disabled = true;
+    var stamp = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
+    root.html2canvas(target, {
+      backgroundColor: "#08111d", scale: Math.min(2, window.devicePixelRatio || 1) * 1.25, logging: false, useCORS: false,
+      ignoreElements: function (el) { return el.classList && el.classList.contains("dash-bar"); },
+      onclone: function (doc, el) {
+        svgInline(target, el);
+        var head = doc.createElement("div");
+        head.className = "export-head";
+        var t = doc.createElement("strong"); t.textContent = "header-lens · email header analysis";
+        var m = doc.createElement("span"); m.textContent = "Generated " + stamp + " · Cyber Insight Signals";
+        head.appendChild(t); head.appendChild(m);
+        el.insertBefore(head, el.firstChild);
+        el.classList.add("exporting");
+      }
+    }).then(function (canvas) {
+      canvas.toBlob(function (blob) {
+        var url = URL.createObjectURL(blob);
+        if (tab && !tab.closed) tab.location.href = url;
+        else { var a = h("a", { href: url, download: "header-lens-report.png" }); document.body.appendChild(a); a.click(); a.remove(); }
+        setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+      }, "image/png");
+    }).catch(function () { if (tab && !tab.closed) tab.close(); }).then(function () { label.textContent = old; btn.disabled = false; });
+  }
+
   // ---------- Render ----------
   function render(container, r, actions) {
     current = r;
@@ -420,7 +462,8 @@
       h("button", { class: "btn btn-ghost", type: "button", onclick: actions.back }, [icon("back"), "New analysis"]),
       h("div", { class: "dash-actions" }, [
         h("button", { class: "btn btn-ghost", type: "button", onclick: function (e) { var b = e.currentTarget; navigator.clipboard.writeText(summary(r)).then(function () { b.lastChild.textContent = "Copied"; setTimeout(function () { b.lastChild.textContent = "Copy summary"; }, 1500); }, function () {}); } }, [icon("copy"), h("span", { text: "Copy summary" })]),
-        h("button", { class: "btn btn-ghost", type: "button", onclick: function () { download("header-lens-report.csv", csv(r), "text/csv"); } }, [icon("download"), "Export CSV"])
+        h("button", { class: "btn btn-ghost", type: "button", onclick: function () { download("header-lens-report.csv", csv(r), "text/csv"); } }, [icon("download"), "Export CSV"]),
+        h("button", { class: "btn btn-ghost", type: "button", onclick: function (e) { exportImage(e.currentTarget, main); } }, [icon("image"), h("span", { text: "Export image" })])
       ])
     ]);
     var cards = h("div", { class: "cards" }, [
@@ -445,7 +488,7 @@
       toggle.setAttribute("title", open ? "Collapse raw headers" : "Show raw headers");
     }
     toggle.addEventListener("click", function () { setOpen(layout.classList.contains("raw-closed")); });
-    if (window.matchMedia("(max-width: 1100px)").matches) setOpen(false);
+    setOpen(false);
     onJump = function (idx) {
       setOpen(true);
       var row = document.getElementById("hdr-" + idx);
