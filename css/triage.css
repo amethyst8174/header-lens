@@ -1,12 +1,5 @@
 /* Email triage page. Builds on style.css (shared with the header page) without changing it. */
 
-/* Tool switcher */
-.toolnav { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: rgba(15, 28, 46, 0.7); }
-.toolnav a { padding: 6px 14px; border-radius: 9px; font: 600 13px var(--sans); color: var(--body); white-space: nowrap; }
-.toolnav a:hover { text-decoration: none; color: var(--text); background: rgba(63, 164, 255, 0.08); }
-.toolnav a[aria-current="page"] { color: #04121f; background: linear-gradient(90deg, var(--teal), var(--blue)); }
-body.triage .topbar { flex-wrap: wrap; }
-
 /* Input */
 .btn-sm { height: 28px; padding: 0 10px; font-size: 12px; border-radius: 8px; }
 .tdrop { min-height: 220px; }
@@ -98,7 +91,6 @@ body.tab-headers .tpanel .dash-layout { margin-top: 0; }
 .query { margin: 0; padding: 10px 12px; border-radius: 8px; background: #060e18; border: 1px solid var(--line); color: #c9d8e8; font: 400 12px/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 
 @media (max-width: 1100px) {
-  .toolnav { order: 3; width: 100%; justify-content: center; }
   .tgrid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 860px) {
