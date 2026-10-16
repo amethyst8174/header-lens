@@ -511,3 +511,11 @@ body.is-dash .topbar, body.is-dash .footer { max-width: 1440px; }
 .tc-text strong { color: var(--text); font-size: 14.5px; }
 .tc-go { flex: none; font: 600 13px var(--sans); color: var(--teal); white-space: nowrap; }
 @media (max-width: 640px) { .triage-cta { flex-wrap: wrap; } .tc-go { width: 100%; padding-left: 54px; } }
+
+/* Clear white outline so the share buttons (especially X) stand out on the dark page */
+.share-btn, .share-x { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.92), 0 4px 12px rgba(0, 0, 0, 0.35); }
+
+/* Inside the SOC Toolkit: the toolkit shows the top bar and footer once around the tool */
+.embedded .topbar, .embedded .footer { display: none; }
+.embedded main#view-input { padding-top: 8px; }
+.embedded main.dash { padding-top: 16px; }
