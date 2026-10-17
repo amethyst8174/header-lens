@@ -554,6 +554,19 @@ body.is-dash .topbar, body.is-dash .footer { max-width: 1440px; }
   --ok: #0f9d6b; --warn: #c67a0a; --bad: #dc3a2b; --low: #a98a12; --info: #2f6fd4; --neutral: #5f7488; --int: #4a6075;
   --c-routing: #2563eb; --c-identity: #c13d79; --c-auth: #6d5ce0; --c-metadata: #566b82; --c-geo: #e06a2c; --c-security: #0d9488; --c-malware: #dc3a2b; --c-custom: #c0820a; --c-other: #556a81;
 }
+/* Fixed-dark chrome: the top bar keeps the dark palette in BOTH themes, so the light/dark
+   toggle only changes the main content area. Re-anchors the full dark palette for its subtree. */
+.topbar {
+  --bg: #08111d; --panel: #0f1c2e; --panel-2: #0b1625;
+  --line: #1e3350; --line-strong: #2b4870;
+  --text: #eaf1f8; --body: #a9bbcf; --muted: #7389a3;
+  --teal: #2fd6c0; --blue: #3fa4ff; --orange: #ff9b45; --danger: #ff7a6b;
+  --on-accent: #06121f; --chip: rgba(15, 28, 46, 0.7); --hair: rgba(30, 51, 80, 0.7); --well: rgba(6, 14, 24, 0.55); --well-solid: #060e18; --code-fg: #d7e6f5;
+  --map-sea: #0a1626; --map-land: #1b2d45; --map-land-stroke: #0a1626;
+  --ok: #3ddc97; --warn: #ffb547; --bad: #ff6b6b; --low: #e3cf6e; --info: #7fb8ff; --neutral: #8ea3bb; --int: #5f7590;
+  --c-routing: #3fa4ff; --c-identity: #e46aa0; --c-auth: #9a8cff; --c-metadata: #8fa2b8; --c-geo: #ff8a5c; --c-security: #2fd6c0; --c-malware: #ff6b6b; --c-custom: #f2b84b; --c-other: #5f7590;
+  color-scheme: dark;
+}
 :root[data-theme="light"] .glow { opacity: 0.45; }
 :root[data-theme="light"] body {
   background-image:
@@ -579,3 +592,18 @@ body.is-dash .topbar, body.is-dash .footer { max-width: 1440px; }
 .theme-toggle[data-theme-state="dark"] .ico-moon { display: block; }
 .theme-toggle .tt-label { white-space: nowrap; letter-spacing: 0.01em; }
 @media (max-width: 560px) { .theme-toggle .tt-label { display: none; } .theme-toggle { padding: 0 9px; } }
+
+/* Dark top bar in both themes: the top bar is chrome, so it keeps the dark palette and a dark
+   background whether the body is light or dark. Full-bleed, with content aligned to the page
+   column (wider on the dashboard view). */
+.topbar {
+  background: linear-gradient(180deg, #0f1c2e, #0a1524);
+  border-bottom: 1px solid var(--line);
+  max-width: none;
+  padding-left: max(24px, calc((100% - 1040px) / 2 + 24px));
+  padding-right: max(24px, calc((100% - 1040px) / 2 + 24px));
+}
+body.is-dash .topbar {
+  padding-left: max(24px, calc((100% - 1440px) / 2 + 24px));
+  padding-right: max(24px, calc((100% - 1440px) / 2 + 24px));
+}
